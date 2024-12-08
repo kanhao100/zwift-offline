@@ -1,0 +1,162 @@
+[
+  {
+    "name": "Bealach na Ba (9 km / 632 m)",
+    "road": "10011"
+  },
+  {
+    "name": "Cheddar Gorge (4.7 km / 171 m)",
+    "road": "10021"
+  },
+  {
+    "name": "Cipressa (6.4 km / 228 m)",
+    "road": "10022"
+  },
+  {
+    "name": "Climb to Hollywood Sign (8 km / 477 m)",
+    "road": "10001"
+  },
+  {
+    "name": "Col d'Aspin (13.5 km / 811 m)",
+    "road": "10004"
+  },
+  {
+    "name": "Col de Peyresourde (Avajan) (8.3 km / 559 m)",
+    "road": "10033"
+  },
+  {
+    "name": "Col de la Couillole (18.1 km / 1202 m)",
+    "road": "10025"
+  },
+  {
+    "name": "Col de la Madone (15.9 km / 898 m)",
+    "road": "10015"
+  },
+  {
+    "name": "Col des Aravis (5.2 km / 280 m)",
+    "road": "10005"
+  },
+  {
+    "name": "Col du Galibier (Lautaret) (10.4 km / 539 m)",
+    "road": "10032"
+  },
+  {
+    "name": "Col du Platzerwasel (7.9 km / 596 m)",
+    "road": "10008"
+  },
+  {
+    "name": "Col du Rosier (5 km / 222 m)",
+    "road": "10023"
+  },
+  {
+    "name": "Col du Tourmalet (17.1 km / 1216 m)",
+    "road": "10010"
+  },
+  {
+    "name": "Coll d'Ordino (10.3 km / 505 m)",
+    "road": "10013"
+  },
+  {
+    "name": "Cote de Domancy (3 km / 240 m)",
+    "road": "10007"
+  },
+  {
+    "name": "Cote de Pike (2.2 km / 215 m)",
+    "road": "10003"
+  },
+  {
+    "name": "Cote de Trebiac (4.6 km / 207 m)",
+    "road": "10009"
+  },
+  {
+    "name": "Crow Road (7 km / 251 m)",
+    "road": "10012"
+  },
+  {
+    "name": "C\u00f4te des Forche (3 km / 148 m)",
+    "road": "10029"
+  },
+  {
+    "name": "Eazy Rider (1.3 km / 21 m)",
+    "road": "10002"
+  },
+  {
+    "name": "Gotthard Pass (14.4 km / 909 m)",
+    "road": "10038"
+  },
+  {
+    "name": "Isola 2000 (18.9 km / 1145 m)",
+    "road": "10030"
+  },
+  {
+    "name": "La Laguna Negra (9.1 km / 509 m)",
+    "road": "10014"
+  },
+  {
+    "name": "La Super Planche des Belles Filles (8.6 km / 602 m)",
+    "road": "10019"
+  },
+  {
+    "name": "La Turbie + Col d'Eze (15.9 km / 616 m)",
+    "road": "10031"
+  },
+  {
+    "name": "Lagos de Covadonga (14.5 km / 976 m)",
+    "road": "10035"
+  },
+  {
+    "name": "Mont\u00e9e du Chinaillon (8.1 km / 353 m)",
+    "road": "10034"
+  },
+  {
+    "name": "Mt Fuji (25.4 km / 1208 m)",
+    "road": "10026"
+  },
+  {
+    "name": "Mt. Hamilton (31.3 km / 1259 m)",
+    "road": "10036"
+  },
+  {
+    "name": "Norton Summit (8.7 km / 363 m)",
+    "road": "10039"
+  },
+  {
+    "name": "Old La Honda (5.6 km / 395 m)",
+    "road": "10018"
+  },
+  {
+    "name": "Old Willunga Hill (4 km / 252 m)",
+    "road": "10020"
+  },
+  {
+    "name": "Pas de Peyrol/Puy Mary (10.3 km / 603 m)",
+    "road": "10028"
+  },
+  {
+    "name": "Passo dello Stelvio (23.4 km / 1596 m)",
+    "road": "10024"
+  },
+  {
+    "name": "Pla d'Adet (12.1 km / 847 m)",
+    "road": "10027"
+  },
+  {
+    "name": "Puy de Dome (13 km / 913 m)",
+    "road": "10006"
+  },
+  {
+    "name": "Rocacorba (11.8 km / 756 m)",
+    "road": "10017"
+  },
+  {
+    "name": "Sa Calobra (10.8 km / 658 m)",
+    "road": "10016"
+  },
+  {
+    "name": "Ski Lift Climb (8.6 km / 689 m)",
+    "road": "10000"
+  },
+  {
+    "name": "Trollstigen (12.4 km / 784 m)",
+    "road": "10037"
+  }
+]
