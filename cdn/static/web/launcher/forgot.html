@@ -1,20 +1,20 @@
 {% extends "./layout.html" %}
 {% block content %}
-  <h1><div class="text-shadow">Zwift Launcher</div></h1>
-  <h4 class="text-shadow">Forgot password</h4>
+  <h1><div class="text-shadow">Zwift 社区服启动器</div></h1>
+  <h4 class="text-shadow">忘记密码</h4>
   <div class="row">
     <div class="col-sm-6 col-md-5">
       <form id="forgot" action="{{ url_for('forgot') }}" method="post" class="top-buffer">
         <div class="row">
           <div class="col-md-12">
-            <label class="text-shadow">Username</label>
+            <label class="text-shadow">用户名</label>
             <input type="text" id="username" name="username" class="form-control form-control-sm">
           </div>
         </div>
         <div class="row">
           <div class="col-md-12 top-buffer">
-            <input type="submit" value="Submit" class="btn btn-sm btn-light">
-            <a href="{{ url_for('login') }}" class="btn btn-sm btn-secondary">Back</a>
+            <input type="submit" value="提交" class="btn btn-sm btn-light">
+            <a href="{{ url_for('login') }}" class="btn btn-sm btn-secondary">返回</a>
           </div>
         </div>
       </form>

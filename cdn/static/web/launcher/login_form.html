@@ -1,21 +1,21 @@
 {% extends "./layout.html" %}
 {% block content %}
-  <h1><div class="text-shadow">Zwift Launcher</div></h1>
-  <h4 class="text-shadow">Login</h4>
-  <a href="/signup" class="btn btn-sm btn-success">Sign up</a>
-  <a href="/forgot" class="btn btn-sm btn-secondary">Forgot password</a>
+  <h1><div class="text-shadow">Zwift 社区服启动器</div></h1>
+  <h4 class="text-shadow">登录</h4>
+  <a href="/signup" class="btn btn-sm btn-success">注册</a>
+  <a href="/forgot" class="btn btn-sm btn-secondary">忘记密码</a>
   <div class="row">
     <div class="col-sm-6 col-md-5">
       <form id="login" action="{{ url_for('login') }}" method="post" class="top-buffer">
         <div class="row">
           <div class="col-md-12">
-            <label class="text-shadow">Username</label>
+            <label class="text-shadow">用户名</label>
             <input type="text" id="username" name="username" class="form-control form-control-sm">
           </div>
         </div>
         <div class="row">
           <div class="col-md-12">
-            <label class="text-shadow">Password</label>
+            <label class="text-shadow">密码</label>
             <input type="password" id="password" name="password" class="form-control form-control-sm">
           </div>
         </div>
@@ -23,13 +23,13 @@
           <div class="col-md-12 top-buffer">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="remember" name="remember">
-              <label class="form-check-label text-shadow" for="remember">Remember me</label>
+              <label class="form-check-label text-shadow" for="remember">记住我</label>
             </div>
           </div>
         </div>
         <div class="row">
           <div class="col-md-12 top-buffer">
-            <input type="submit" value="Login" class="btn btn-sm btn-light">
+            <input type="submit" value="登录" class="btn btn-sm btn-light">
           </div>
         </div>
       </form>

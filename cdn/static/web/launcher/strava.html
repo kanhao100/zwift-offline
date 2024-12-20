@@ -2,18 +2,22 @@
 {% block content %}
   <h1><div class="text-shadow">Strava</div></h1>
   {% if username != "zoffline" %}
-    <h4 class="text-shadow">Logged in as {{ username }}</h4>
+    <h4 class="text-shadow">已登录:{{ username }}</h4>
   {% endif %}
+  
+  <!-- 添加提示信息 -->
+  <p class="text-shadow">获取 客户 ID 和 客户端密钥 from <a href="https://www.strava.com/settings/api" target="_blank">https://www.strava.com/settings/api</a></p>
+  
   <div class="row">
     <div class="col-md-12">
-      <a href="{{ url_for('settings', username=username) }}" class="btn btn-sm btn-secondary">Back</a>
+      <a href="{{ url_for('settings', username=username) }}" class="btn btn-sm btn-secondary">返回</a>
       {% if cid or cs %}
-        <a href="/delete/strava_api.bin" class="btn btn-sm btn-danger">Remove credentials</a>
+        <a href="/delete/strava_api.bin" class="btn btn-sm btn-danger">删除凭证</a>
       {% endif %}
       {% if token %}
-        <a href="/delete/strava_token.txt" class="btn btn-sm btn-danger">Remove authorization</a>
+        <a href="/delete/strava_token.txt" class="btn btn-sm btn-danger">删除授权</a>
       {% elif cid and cs %}
-        <a href="{{ url_for('strava_auth') }}" class="btn btn-sm btn-secondary">Authorize</a>
+        <a href="{{ url_for('strava_auth') }}" class="btn btn-sm btn-secondary">授权</a>
       {% endif %}
     </div>
   </div>
@@ -22,17 +26,17 @@
       <form id="strava" action="{{ url_for('strava', username=username) }}" method="post">
         <div class="row">
           <div class="col-md-12">
-            <label class="col-form-label col-form-label-sm text-shadow">Client ID</label>
+            <label class="col-form-label col-form-label-sm text-shadow">客户 ID(Client ID)</label>
             <input type="text" id="client_id" name="client_id" value="{{ cid }}" class="form-control form-control-sm">
           </div>
           <div class="col-md-12">
-            <label class="col-form-label col-form-label-sm text-shadow">Client secret</label>
+            <label class="col-form-label col-form-label-sm text-shadow">客户端密钥(Client Secret)</label>
             <input type="text" id="client_secret" name="client_secret" value="{{ cs }}" class="form-control form-control-sm">
           </div>
         </div>
         <div class="row">
           <div class="col-md-12 top-buffer">
-            <input type="submit" value="Submit" class="btn btn-sm btn-light">
+            <input type="submit" value="提交" class="btn btn-sm btn-light">
           </div>
         </div>
       </form>
