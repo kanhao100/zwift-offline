@@ -22,6 +22,8 @@ import jwt
 import sqlalchemy
 import fitdecode
 import xml.etree.ElementTree as ET
+import click
+import string
 from copy import deepcopy
 from functools import wraps
 from io import BytesIO
@@ -370,6 +372,12 @@ class PowerCurve(db.Model):
 class Version(db.Model):
     version = db.Column(db.Integer, primary_key=True)
 
+class InviteCode(db.Model):
+    code = db.Column(db.String(6), primary_key=True)
+    used = db.Column(db.Boolean, default=False)
+    used_by = db.Column(db.Integer, db.ForeignKey('user.player_id'), nullable=True)
+    used_at = db.Column(db.DateTime, nullable=True)
+
 class Relay:
     def __init__(self, key = b''):
         self.ri = 0
@@ -563,13 +571,17 @@ def jwt_to_session_cookie(f):
 @app.route("/signup/", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-        username = request.form['username']
+        username_with_code = request.form['username']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
         first_name = request.form['first_name']
         last_name = request.form['last_name']
-
-        if not (username and password and confirm_password and first_name and last_name):
+        
+        if '#' not in username_with_code:
+            flash("Please include invite code with format: email#code")
+            return redirect(url_for('signup'))
+        username, invite_code = username_with_code.split('#', 1)
+        if not (username and password and confirm_password and first_name and last_name and invite_code):
             flash("All fields are required.")
             return redirect(url_for('signup'))
         if not re.match(r"[^@]+@[^@]+\.[^@]+", username):
@@ -578,23 +590,54 @@ def signup():
         if password != confirm_password:
             flash("Passwords did not match.")
             return redirect(url_for('signup'))
-
+        if not re.match(r"^[A-Za-z0-9]{6}$", invite_code):
+            flash("Invalid invite code format.")
+            return redirect(url_for('signup'))
+        invite = InviteCode.query.get(invite_code.upper())
+        if not invite:
+            flash("Invalid invite code.")
+            return redirect(url_for('signup'))
+        if invite.used:
+            flash("This invite code has already been used.")
+            return redirect(url_for('signup'))
         hashed_pwd = generate_password_hash(password, 'scrypt')
-
         new_user = User(username=username, pass_hash=hashed_pwd, first_name=first_name, last_name=last_name)
-        db.session.add(new_user)
-
+        
         try:
+            db.session.add(new_user)
+            db.session.flush()
+            invite.used = True
+            invite.used_by = new_user.player_id
+            invite.used_at = datetime.datetime.now(datetime.timezone.utc)
             db.session.commit()
         except sqlalchemy.exc.IntegrityError:
+            db.session.rollback()
             flash("Username {u} is not available.".format(u=username))
             return redirect(url_for('signup'))
-
         flash("User account has been created.")
         return redirect(url_for("login"))
-
     return render_template("signup.html")
 
+def generate_invite_code():
+    chars = string.ascii_uppercase + string.digits
+    while True:
+        code = ''.join(random.choice(chars) for _ in range(6))
+        if not InviteCode.query.get(code):
+            return code
+
+@app.cli.command("generate-invites")
+@click.argument("count", type=int)
+def generate_invite_codes(count):
+    codes = []
+    for _ in range(count):
+        code = generate_invite_code()
+        invite = InviteCode(code=code)
+        db.session.add(invite)
+        codes.append(code)
+    db.session.commit()
+    print(f"Generated {count} invite codes:")
+    for code in codes:
+        print(code)
 
 def check_sha256_hash(pwhash, password):
     import hmac
