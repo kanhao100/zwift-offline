@@ -419,6 +419,12 @@ Zwift 更新将不会安装。如果 zoffline 更新破坏了某些功能,请查
 或者,可以使用[这个脚本](https://gist.github.com/oldnapalm/556c58448a6ee09438b39e1c1c9ce3d0)将 Zwift 降级到 zoffline 支持的版本。
 </details>
 
+<details><summary>Zwift phased updates</summary>
+
+If you install Zwift during a phased update period, when you enable zoffline it's possible that Zwift attempts to update again and fails.
+To workaround this situation, rename the file ``Zwift_ver_cur.<version>.xml`` in Zwift directory to ``Zwift_ver_cur.xml`` and edit the file ``Zwift_ver_cur_filename.txt`` accordingly.
+</details>
+
 
 ## 免责声明
 
