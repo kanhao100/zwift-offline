@@ -1,4 +1,12 @@
 # zoffline_CN
+[![ci](https://github.com/kanhao100/zwift-offline/actions/workflows/ci.yml/badge.svg)](https://github.com/kanhao100/zwift-offline/actions/workflows/ci.yml)
+[![pyinstaller](https://github.com/kanhao100/zwift-offline/actions/workflows/pyinstaller.yaml/badge.svg)](https://github.com/kanhao100/zwift-offline/actions/workflows/pyinstaller.yaml)
+
+本仓库是 zoffline_CN 的代码仓库，目前与社区通用版本 zoffline 有如下区别，后续会添加更多功能：
+- 登录界面添加了中文支持
+- 添加了邀请码注册制度
+
+以下是 zoffline README文件的翻译：
 
 zoffline 通过充当部分 Zwift 服务器的实现,使得可以离线使用 [Zwift](http://zwift.com)。默认情况下 zoffline 仅支持单人游戏。查看[步骤 6: 启用多人游戏](#step-6-可选-启用多人游戏)了解如何启用多用户/多配置文件支持。
 
@@ -6,9 +14,7 @@ zoffline 还提供了与幽灵(你之前的骑行记录)一起骑行的功能。
 
 此外,zoffline 的启动器允许选择特定地图进行骑行,无需修改配置文件。
 
-zoffline_CN 目前与社区通用版本 zoffline 有如下区别：
-- 登录界面添加了中文支持
-- 添加了邀请码注册制度
+
 
 ## 安装
 
