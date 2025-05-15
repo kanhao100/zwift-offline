@@ -7,18 +7,20 @@ message UserStorage {
 message Attributes {
     optional GameSettings game_settings = 22;
     optional GarageItemLastSelected garage_last_selected = 23;
+    optional BikeProgress bike_progress = 24;
     optional SpecialEventSeen special_event_seen = 25;
 }
 
 message GameSettings {
     optional float f2 = 2;
-    optional int32 leaderboards = 3;
+    optional int32 minimal_leaderboards = 3;
     optional int32 power_meter_slot0 = 4;
     optional int32 power_meter_slot1 = 5;
     optional int32 power_meter_slot2 = 6;
     optional int32 power_meter_slot3 = 7;
-    optional int32 f9 = 9;
-    optional float screen_shake_effect = 10;
+    optional int32 climb_graph_sensitivity = 9;
+    optional float screen_shake_scale = 10;
+    optional int32 streaks_flair_visuals = 11;
 }
 
 message GarageItemLastSelected {
@@ -29,4 +31,27 @@ message GarageItemLastSelected {
 message SpecialEventSeen {
     optional string signature = 1;
     optional uint64 time = 2;
+}
+
+message BikeProgress {
+    optional string signature = 1;
+    optional uint32 level = 2;
+    optional float level_distance = 3;
+    optional float total_distance = 4;
+    optional float level_elevation = 5;
+    optional float total_elevation = 6;
+    optional float level_moving_time = 7;
+    optional float total_moving_time = 8;
+    optional uint64 last_upgrade = 10;
+    optional uint64 time = 11;
+    repeated BikeUpgrade bike_upgrades = 12;
+    optional uint32 f14 = 14;
+    optional float percentage = 15;
+    optional uint32 f16 = 16;
+}
+
+message BikeUpgrade {
+    optional uint64 time = 1;
+    optional uint32 level = 2;
+    optional uint32 price = 3;
 }

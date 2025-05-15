@@ -4,6 +4,10 @@
     "road": "10011"
   },
   {
+    "name": "Cauberg (0.8 km / 57 m)",
+    "road": "10043"
+  },
+  {
     "name": "Cheddar Gorge (4.7 km / 171 m)",
     "road": "10021"
   },
@@ -26,6 +30,14 @@
   {
     "name": "Col de la Couillole (18.1 km / 1202 m)",
     "road": "10025"
+  },
+  {
+    "name": "Col de la Croix Saint-Robert (5.7 km / 345 m)",
+    "road": "10047"
+  },
+  {
+    "name": "Col de la Madeleine (14.3 km / 1110 m)",
+    "road": "10048"
   },
   {
     "name": "Col de la Madone (15.9 km / 898 m)",
@@ -72,6 +84,10 @@
     "road": "10012"
   },
   {
+    "name": "C\u00f4te de la Redoute (1.5 km / 153 m)",
+    "road": "10044"
+  },
+  {
     "name": "C\u00f4te des Forche (3 km / 148 m)",
     "road": "10029"
   },
@@ -84,8 +100,12 @@
     "road": "10038"
   },
   {
-    "name": "Hardknott Pass (3.6 km / 275 m)",
+    "name": "Hardknott Pass (2.7 km / 306 m)",
     "road": "10040"
+  },
+  {
+    "name": "Hautacam (12.7 km / 1023 m)",
+    "road": "10046"
   },
   {
     "name": "Isola 2000 (18.9 km / 1145 m)",
@@ -120,6 +140,10 @@
     "road": "10036"
   },
   {
+    "name": "M\u00fbr De Bretagne (2 km / 128 m)",
+    "road": "10045"
+  },
+  {
     "name": "Norton Summit (8.7 km / 363 m)",
     "road": "10039"
   },
@@ -132,6 +156,10 @@
     "road": "10020"
   },
   {
+    "name": "Oude Kwaremont (1.5 km / 63 m)",
+    "road": "10042"
+  },
+  {
     "name": "Pas de Peyrol/Puy Mary (10.3 km / 603 m)",
     "road": "10028"
   },
@@ -142,6 +170,10 @@
   {
     "name": "Pla d'Adet (12.1 km / 847 m)",
     "road": "10027"
+  },
+  {
+    "name": "Poggio (4.3 km / 136 m)",
+    "road": "10041"
   },
   {
     "name": "Puy de Dome (13 km / 913 m)",

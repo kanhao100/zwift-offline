@@ -14,6 +14,11 @@
     "road": 0,
     "time": 614865
   },
+  "2143464829": {
+    "name": "France - Bon Voyage",
+    "road": 120,
+    "time": 399330
+  },
   "-375055007": {
     "name": "France - Casse-Pattes",
     "road": 26,
@@ -23,6 +28,11 @@
     "name": "France - Climb Portal - Mont Saint-Michel",
     "road": 26,
     "time": 344976
+  },
+  "1600198346": {
+    "name": "France - Croissant",
+    "road": 120,
+    "time": 399330
   },
   "986252325": {
     "name": "France - Douce France",
@@ -34,10 +44,30 @@
     "road": 26,
     "time": 482571
   },
+  "1538375239": {
+    "name": "France - Gentil 8",
+    "road": 130,
+    "time": 386903
+  },
+  "1793712753": {
+    "name": "France - Hell of the North",
+    "road": 26,
+    "time": 505531
+  },
+  "-320001439": {
+    "name": "France - Knights of the Roundabout",
+    "road": 120,
+    "time": 399330
+  },
   "1433431343": {
     "name": "France - La Reine",
     "road": 26,
     "time": 501055
+  },
+  "573843083": {
+    "name": "France - Macaron",
+    "road": 26,
+    "time": 305075
   },
   "-1442814000": {
     "name": "France - Petit Boucle",
@@ -54,15 +84,40 @@
     "road": 26,
     "time": 487155
   },
+  "1409345545": {
+    "name": "France - Rapide Run",
+    "road": 26,
+    "time": 303010
+  },
   "872351836": {
     "name": "France - Roule Ma Poule",
     "road": 0,
     "time": 971137
   },
+  "136140280": {
+    "name": "France - Sacre Bleu",
+    "road": 130,
+    "time": 386903
+  },
+  "319138658": {
+    "name": "France - Three Musketeers",
+    "road": 130,
+    "time": 386903
+  },
   "-1881526724": {
     "name": "France - Tire-Bouchon",
     "road": 0,
     "time": 971137
+  },
+  "358794394": {
+    "name": "France - Ven-10",
+    "road": 26,
+    "time": 531247
+  },
+  "1975694067": {
+    "name": "France - Ven-10 Run",
+    "road": 26,
+    "time": 531249
   },
   "-1721499149": {
     "name": "France - Ven-Top",
@@ -344,6 +399,11 @@
     "road": 4,
     "time": 775312
   },
+  "1367364772": {
+    "name": "Makuri Islands - Neon After Party",
+    "road": 4,
+    "time": 731960
+  },
   "-887604976": {
     "name": "Makuri Islands - Neon Flats",
     "road": 4,
@@ -483,6 +543,11 @@
     "name": "New York - Knickerbocker Reverse",
     "road": 4,
     "time": 173759
+  },
+  "-625345126": {
+    "name": "New York - LaGuardia After Party",
+    "road": 4,
+    "time": 173716
   },
   "-1872187942": {
     "name": "New York - LaGuardia Loop",
@@ -642,7 +707,7 @@
   "-943302084": {
     "name": "Scotland - Glasgow Crit Circuit Run",
     "road": 9,
-    "time": 1002106
+    "time": 1001900
   },
   "1258415487": {
     "name": "Scotland - Glasgow Reverse",
@@ -764,6 +829,11 @@
     "road": 133,
     "time": 248735
   },
+  "-1406146301": {
+    "name": "Watopia - Danger Noodle",
+    "road": 0,
+    "time": 987894
+  },
   "454871454": {
     "name": "Watopia - Deca Dash",
     "road": 192,
@@ -843,6 +913,11 @@
     "name": "Watopia - Handful of Gravel Run",
     "road": 35,
     "time": 320749
+  },
+  "-333494250": {
+    "name": "Watopia - Hilltop Hustle",
+    "road": 149,
+    "time": 587992
   },
   "-1557483915": {
     "name": "Watopia - Hilly Route",
@@ -1072,7 +1147,7 @@
   "2062126722": {
     "name": "Watopia - Tair Dringfa Fechan",
     "road": 1,
-    "time": 71129
+    "time": 90002
   },
   "-1964332641": {
     "name": "Watopia - Temple Trek",
@@ -1232,7 +1307,7 @@
   "1724903700": {
     "name": "Watopia - ZG25 Queen",
     "road": 0,
-    "time": 985893
+    "time": 987894
   },
   "-673805084": {
     "name": "Watopia - Zwift Bambino Fondo",

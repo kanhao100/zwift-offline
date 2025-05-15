@@ -52,6 +52,7 @@ import per_session_info_pb2
 import profile_pb2
 import segment_result_pb2
 import route_result_pb2
+import race_result_pb2
 import world_pb2
 import zfiles_pb2
 import hash_seeds_pb2
@@ -60,6 +61,7 @@ import variants_pb2
 import playback_pb2
 import user_storage_pb2
 import online_sync
+import fitness_pb2
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "INFO"))
 logger = logging.getLogger('zoffline')
@@ -167,6 +169,7 @@ player_partial_profiles = {}
 map_override = {}
 climb_override = {}
 global_bookmarks = {}
+global_race_results = {}
 restarting = False
 restarting_in_minutes = 0
 reload_pacer_bots = False
@@ -255,6 +258,11 @@ class Activity(db.Model):
     fitness_privacy = db.Column(db.Integer)
     club_name = db.Column(db.Text)
     movingTimeInMs = db.Column(db.Integer)
+    work = db.Column(db.Float)
+    tss = db.Column(db.Float)
+    normalized_power = db.Column(db.Float)
+    power_zones = db.Column(db.Text)
+    power_units = db.Column(db.Float)
 
 class SegmentResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -324,6 +332,18 @@ class Goal(db.Model):
     period_end_date = db.Column(db.Integer)
     status = db.Column(db.Integer)
     timezone = db.Column(db.Text)
+
+class GoalMetrics(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    player_id = db.Column(db.Integer)
+    weekGoalTSS = db.Column(db.Integer)
+    weekGoalCalories = db.Column(db.Integer)
+    weekGoalKjs = db.Column(db.Integer)
+    weekGoalDistanceKilometers = db.Column(db.Float)
+    weekGoalDistanceMiles = db.Column(db.Float)
+    weekGoalTimeMinutes = db.Column(db.Integer)
+    lastUpdated = db.Column(db.Text)
+    currentGoalSetting = db.Column(db.Text)
 
 class Playback(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -398,7 +418,10 @@ class PartialProfile:
     player_type = 'NORMAL'
     male = True
     weight_in_grams = 0
+    height_in_millimeters = 0
     imageSrc = ''
+    use_metric = True
+    time = 0
     def to_json(self):
         return {"countryCode": self.country_code,
                 "enrolledZwiftAcademy": False, #don't need
@@ -412,6 +435,10 @@ class PartialProfile:
 class Bookmark:
     name = ''
     state = None
+
+class RaceResults:
+    results = None
+    time = 0
 
 class Online:
     total = 0
@@ -489,6 +516,10 @@ def get_partial_profile(player_id):
         partial_profile.player_id = player_id
         if player_id in global_pace_partners.keys():
             profile = global_pace_partners[player_id].profile
+            for f in profile.public_attributes:
+                if f.id == 1766985504: #crc32 of "PACE PARTNER - ROUTE"
+                    partial_profile.route = toSigned(f.number_value, 4) if f.number_value >= 0 else -toSigned(-f.number_value, 4)
+                    break
         elif player_id in global_bots.keys():
             profile = global_bots[player_id].profile
         elif player_id > 10000000:
@@ -517,15 +548,10 @@ def get_partial_profile(player_id):
         partial_profile.player_type = profile_pb2.PlayerType.Name(jsf(profile, 'player_type', 1))
         partial_profile.male = profile.is_male
         partial_profile.weight_in_grams = profile.weight_in_grams
-        for f in profile.public_attributes:
-            #0x69520F20=1766985504 - crc32 of "PACE PARTNER - ROUTE"
-            if f.id == 1766985504:
-                if f.number_value >= 0:
-                    partial_profile.route = toSigned(f.number_value, 4)
-                else:
-                    partial_profile.route = -toSigned(-f.number_value, 4)
-                break
+        partial_profile.height_in_millimeters = profile.height_in_millimeters
+        partial_profile.use_metric = profile.use_metric
         player_partial_profiles[player_id] = partial_profile
+    player_partial_profiles[player_id].time = time.monotonic()
     return player_partial_profiles[player_id]
 
 
@@ -1156,11 +1182,14 @@ def logout(username):
     return redirect(url_for('login'))
 
 
-def insert_protobuf_into_db(table_name, msg, exclude_fields=[]):
+def insert_protobuf_into_db(table_name, msg, exclude_fields=[], json_fields=[]):
     msg_dict = MessageToDict(msg, preserving_proto_field_name=True, use_integers_for_enums=True)
     for key in exclude_fields:
         if key in msg_dict:
             del msg_dict[key]
+    for key in json_fields:
+        if key in msg_dict:
+            msg_dict[key] = json.dumps(msg_dict[key])
     if 'id' in msg_dict:
         del msg_dict['id']
     row = table_name(**msg_dict)
@@ -1169,11 +1198,14 @@ def insert_protobuf_into_db(table_name, msg, exclude_fields=[]):
     return row.id
 
 
-def update_protobuf_in_db(table_name, msg, id, exclude_fields=[]):
+def update_protobuf_in_db(table_name, msg, id, exclude_fields=[], json_fields=[]):
     msg_dict = MessageToDict(msg, preserving_proto_field_name=True, use_integers_for_enums=True)
     for key in exclude_fields:
         if key in msg_dict:
             del msg_dict[key]
+    for key in json_fields:
+        if key in msg_dict:
+            msg_dict[key] = json.dumps(msg_dict[key])
     table_name.query.filter_by(id=id).update(msg_dict)
     db.session.commit()
 
@@ -1245,33 +1277,38 @@ def activity_row_to_json(activity, details=False):
         data.update(extra_data)
     return data
 
-def select_activities_json(player_id, limit, start_after=None):
-    filters = [Activity.distanceInMeters > 100]
+def select_activities_json(player_id, limit, start_after=None, in_progress=True):
+    filters = [Activity.distanceInMeters > 1]
     if player_id:
         filters.append(Activity.player_id == player_id)
+    if not in_progress:
+        filters.append(Activity.end_date != None)
     if start_after:
         filters.append(Activity.id < int(start_after))
     rows = Activity.query.filter(*filters).order_by(Activity.date.desc()).limit(limit)
     ret = []
     for row in rows:
-        if row.end_date:
-            ret.append(activity_row_to_json(row))
+        ret.append(activity_row_to_json(row))
     return ret
 
 @app.route('/api/activity-feed/feed/', methods=['GET'])
+@app.route('/api/activity-feed-service-v2/feed/just-me', methods=['GET'])
 @jwt_to_session_cookie
 @login_required
 def api_activity_feed():
     limit = int(request.args.get('limit'))
     feed_type = request.args.get('feedType')
     start_after = request.args.get('start_after_activity_id')
-    if feed_type == 'JUST_ME' or feed_type == 'PREVIEW': #what is the difference here?
+    profile_id = None
+    in_progress = False
+    if feed_type == 'JUST_ME' or request.path.endswith('just-me'):
         profile_id = current_user.player_id
     elif feed_type == 'OTHER_PROFILE':
         profile_id = int(request.args.get('profile_id'))
-    else: # todo: FAVORITES, FOLLOWEES (showing all for now)
-        profile_id = None
-    ret = select_activities_json(profile_id, limit, start_after)
+    elif feed_type == 'PREVIEW':
+        in_progress = True
+    # todo: FAVORITES, FOLLOWEES (showing all for now)
+    ret = select_activities_json(profile_id, limit, start_after, in_progress)
     return jsonify(ret)
 
 def create_activity_file(fit_file, small_file, full_file=None):
@@ -1379,7 +1416,6 @@ def api_clubs_club_my_clubs_summary():
 @app.route('/api/player-playbacks/player/settings', methods=['GET', 'POST']) # TODO: private = \x08\x01 (1: 1)
 @app.route('/api/scoring/current', methods=['GET'])
 @app.route('/api/game-asset-patching-service/manifest', methods=['GET'])
-@app.route('/api/race-results', methods=['POST'])
 @app.route('/api/workout/progress', methods=['POST'])
 def api_proto_empty():
     return '', 200
@@ -1407,6 +1443,7 @@ def api_users_login():
     req.ParseFromString(request.stream.read())
     player_id = current_user.player_id
     global_relay[player_id] = Relay(req.key)
+    ghosts_enabled[player_id] = current_user.enable_ghosts
 
     response = login_pb2.LoginResponse()
     response.session_state = 'abc'
@@ -1463,31 +1500,20 @@ def relay_session_refresh():
     return refresh.SerializeToString(), 200
 
 
-def save_bookmark(state, name):
-    bookmarks_dir = os.path.join(STORAGE_DIR, str(state.id), 'bookmarks', str(get_course(state)), str(state.sport))
-    if not make_dir(bookmarks_dir):
-        return
-    with open(os.path.join(bookmarks_dir, name + '.bin'), 'wb') as f:
-        f.write(state.SerializeToString())
-
 def logout_player(player_id):
-    #Remove player from online when leaving game/world
-    if player_id in online:
-        activity = 'run' if online[player_id].sport == profile_pb2.Sport.RUNNING else 'ride'
-        save_bookmark(online[player_id], 'Last ' + activity)
-        online.pop(player_id)
-        discord.change_presence(len(online))
     if player_id in global_ghosts:
         del global_ghosts[player_id].rec.states[:]
         global_ghosts[player_id].play.clear()
         global_ghosts.pop(player_id)
-    if player_id in player_partial_profiles:
-        player_partial_profiles.pop(player_id)
+    if player_id in global_bookmarks:
+        global_bookmarks[player_id].clear()
+        global_bookmarks.pop(player_id)
 
 @app.route('/api/users/logout', methods=['POST'])
 @jwt_to_session_cookie
 @login_required
 def api_users_logout():
+    logout_player(current_user.player_id)
     return '', 204
 
 
@@ -1818,9 +1844,10 @@ def update_entitlements(profile):
     e.id = -1
     e.status = profile_pb2.ProfileEntitlement.ProfileEntitlementStatus.ACTIVE
     if os.path.isfile('%s/unlock_entitlements.txt' % STORAGE_DIR) or os.path.isfile('%s/unlock_all_equipment.txt' % STORAGE_DIR):
-        entitlements = list(range(1687, 1871))
+        ent = json.load(open('%s/data/entitlements.txt' % SCRIPT_DIR))
+        entitlements = list(range(ent['first'], ent['last'] + 1))
         if os.path.isfile('%s/unlock_all_equipment.txt' % STORAGE_DIR):
-            entitlements.extend(list(range(1, 1687)))
+            entitlements.extend(list(range(1, ent['first'])))
         for entitlement in entitlements:
             if not any(e.id == entitlement for e in profile.entitlements):
                 e = profile.entitlements.add()
@@ -1869,7 +1896,7 @@ def do_api_profiles(profile_id, is_json):
 @jwt_to_session_cookie
 @login_required
 def api_profiles_me():
-    if request.headers['Source'] == "zwift-companion":
+    if request.headers['Accept'] == 'application/json':
         return do_api_profiles(current_user.player_id, True)
     else:
         return do_api_profiles(current_user.player_id, False)
@@ -2090,7 +2117,7 @@ def api_profiles_activities(player_id):
             return '', 401
         activity = activity_pb2.Activity()
         activity.ParseFromString(request.stream.read())
-        activity.id = insert_protobuf_into_db(Activity, activity, ['fit'])
+        activity.id = insert_protobuf_into_db(Activity, activity, ['fit'], ['power_zones'])
         return '{"id": %ld}' % activity.id, 200
 
     # request.method == 'GET'
@@ -2098,7 +2125,7 @@ def api_profiles_activities(player_id):
     rows = db.session.execute(sqlalchemy.text("SELECT * FROM activity WHERE player_id = :p AND date > date('now', '-1 month')"), {"p": player_id}).mappings()
     for row in rows:
         activity = activities.activities.add()
-        row_to_protobuf(row, activity, exclude_fields=['fit'])
+        row_to_protobuf(row, activity, exclude_fields=['fit', 'power_zones'])
     return activities.SerializeToString(), 200
 
 @app.route('/api/profiles/<int:player_id>/activities/<int:activity_id>/images', methods=['POST'])
@@ -2140,7 +2167,7 @@ def time_since(date):
     if interval > 1: interval_type += 's'
     return '%s %s ago' % (interval, interval_type)
 
-def random_profile(p):
+def random_equipment(p):
     p.ride_helmet_type = random.choice(GD['headgears'])
     p.glasses_type = random.choice(GD['glasses'])
     p.ride_shoes_type = random.choice(GD['bikeshoes'])
@@ -2152,7 +2179,18 @@ def random_profile(p):
     p.run_shirt_type = random.choice(GD['runshirts'])
     p.run_shorts_type = random.choice(GD['runshorts'])
     p.run_shoes_type = random.choice(GD['runshoes'])
-    return p
+
+def random_body(p, random_gender=False):
+    if random_gender:
+        p.is_male = bool(random.getrandbits(1))
+    p.hair_type = random.choice(GD['hair_types'])
+    p.hair_colour = random.randrange(5)
+    if p.is_male:
+        p.body_type = random.choice(GD['body_types_male'])
+        p.facial_hair_type = random.choice(GD['facial_hair_types'])
+        p.facial_hair_colour = random.randrange(5)
+    else:
+        p.body_type = random.choice(GD['body_types_female'])
 
 @app.route('/api/profiles', methods=['GET'])
 def api_profiles():
@@ -2160,24 +2198,29 @@ def api_profiles():
     profiles = profile_pb2.PlayerProfiles()
     for i in args:
         p_id = int(i)
-        profile = profile_pb2.PlayerProfile()
         if p_id > 10000000:
             ghostId = math.floor(p_id / 10000000)
             player_id = p_id - ghostId * 10000000
+            p = profiles.profiles.add()
             profile_file = '%s/%s/profile.bin' % (STORAGE_DIR, player_id)
             if os.path.isfile(profile_file):
                 with open(profile_file, 'rb') as fd:
-                    profile.ParseFromString(fd.read())
-                    p = profiles.profiles.add()
-                    p.CopyFrom(random_profile(profile))
-                    p.id = p_id
-                    p.first_name = ''
-                    p.last_name = time_since(global_ghosts[player_id].play[ghostId-1].date)
-                    p.country_code = 0
-                    if GHOST_PROFILE:
-                        for item in ['country_code', 'ride_jersey', 'bike_frame', 'bike_frame_colour', 'bike_wheel_front', 'bike_wheel_rear', 'ride_helmet_type', 'glasses_type', 'ride_shoes_type', 'ride_socks_type']:
-                            if item in GHOST_PROFILE:
-                                setattr(p, item, GHOST_PROFILE[item])
+                    p.ParseFromString(fd.read())
+            p.id = p_id
+            p.first_name = ''
+            try:  # profile can be requested after ghost is deleted
+                p.last_name = time_since(global_ghosts[player_id].play[ghostId-1].date)
+            except:
+                p.last_name = 'Ghost'
+            p.country_code = 0
+            random_equipment(p)
+            if GHOST_PROFILE:
+                for item in ['is_male', 'country_code', 'bike_frame', 'bike_frame_colour', 'bike_wheel_front', 'bike_wheel_rear', 'glasses_type',
+                  'ride_jersey', 'ride_helmet_type', 'ride_shoes_type', 'ride_socks_type', 'run_shirt_type', 'run_shorts_type', 'run_shoes_type']:
+                    if item in GHOST_PROFILE:
+                        setattr(p, item, GHOST_PROFILE[item])
+                if 'random_body' in GHOST_PROFILE and GHOST_PROFILE['random_body']:
+                    random_body(p, 'is_male' not in GHOST_PROFILE)
         elif p_id > 9000000:
             p = profiles.profiles.add()
             p.id = p_id
@@ -2189,6 +2232,7 @@ def api_profiles():
             elif p_id in global_bots.keys():
                 profile = global_bots[p_id].profile
             else:
+                profile = profile_pb2.PlayerProfile()
                 profile_file = '%s/%s/profile.bin' % (STORAGE_DIR, p_id)
                 if os.path.isfile(profile_file):
                     with open(profile_file, 'rb') as fd:
@@ -2458,12 +2502,13 @@ def api_profiles_activities_id(player_id, activity_id):
     stream = request.stream.read()
     activity = activity_pb2.Activity()
     activity.ParseFromString(stream)
-    update_protobuf_in_db(Activity, activity, activity_id, ['fit'])
+    update_protobuf_in_db(Activity, activity, activity_id, ['fit'], ['power_zones'])
 
     response = '{"id":%s}' % activity_id
     if request.args.get('upload-to-strava') != 'true':
         return response, 200
-    if activity.distanceInMeters < 300:
+
+    if activity.distanceInMeters < 1: # Zwift saves the current activity when joining events (may have small distance even if didn't move)
         Activity.query.filter_by(id=activity_id).delete()
         db.session.commit()
         logout_player(player_id)
@@ -2473,6 +2518,8 @@ def api_profiles_activities_id(player_id, activity_id):
     save_fit(player_id, '%s - %s' % (activity_id, activity.fit_filename), activity.fit)
     if current_user.enable_ghosts:
         save_ghost(player_id, quote(activity.name, safe=' '))
+    if activity.sport == profile_pb2.Sport.CYCLING and activity.distanceInMeters >= 2000:
+        update_streaks(player_id, activity)
     # For using with upload_activity
     with open('%s/%s/last_activity.bin' % (STORAGE_DIR, player_id), 'wb') as f:
         f.write(stream)
@@ -3283,7 +3330,7 @@ def relay_worlds_id_aggregate_mobile(server_realm):
     goals = select_protobuf_goals(current_user.player_id, goalCount)
     json_goals = convert_goals_to_json(goals)
     activityCount = int(request.args.get('activityCount'))
-    json_activities = select_activities_json(current_user.player_id, activityCount)
+    json_activities = select_activities_json(None, activityCount)
     eventCount = int(request.args.get('eventCount'))
     eventSport = request.args.get('eventSport')
     events = get_events(eventCount, eventSport)
@@ -3319,7 +3366,7 @@ def relay_worlds_id_players_id(server_realm, player_id):
     if player_id in global_bots.keys():
         bot = global_bots[player_id]
         return bot.route.states[bot.position].SerializeToString()
-    return ""
+    return '', 404
 
 
 @app.route('/relay/worlds/hash-seeds', methods=['GET'])
@@ -3332,6 +3379,13 @@ def relay_worlds_hash_seeds():
         seed.expiryDate = world_time()+(10800+x*1200)*1000
     return seeds.SerializeToString(), 200
 
+
+def save_bookmark(state, name):
+    bookmarks_dir = os.path.join(STORAGE_DIR, str(state.id), 'bookmarks', str(get_course(state)), str(state.sport))
+    if not make_dir(bookmarks_dir):
+        return
+    with open(os.path.join(bookmarks_dir, name + '.bin'), 'wb') as f:
+        f.write(state.SerializeToString())
 
 @app.route('/relay/worlds/attributes', methods=['POST'])
 @jwt_to_session_cookie
@@ -3579,6 +3633,56 @@ def api_route_results_completion_stats_all():
     response = {"response": {"stats": current_page}, "hasPreviousPage": page > 0, "hasNextPage": page < page_count - 1, "pageCount": page_count}
     return jsonify(response)
 
+@app.route('/api/race-results', methods=['POST'])
+@jwt_to_session_cookie
+@login_required
+def api_race_results():
+    result = race_result_pb2.RaceResultEntrySaveRequest()
+    result.ParseFromString(request.stream.read())
+    if not result.event_subgroup_id in global_race_results:
+        global_race_results[result.event_subgroup_id] = RaceResults()
+        global_race_results[result.event_subgroup_id].results = {}
+    global_race_results[result.event_subgroup_id].results[current_user.player_id] = result
+    global_race_results[result.event_subgroup_id].time = time.monotonic()
+    return '', 202
+
+@app.route('/api/race-results/summary', methods=['GET'])
+@jwt_to_session_cookie
+@login_required
+def api_race_results_summary():
+    e_id = int(request.args.get('event_subgroup_id'))
+    results = race_result_pb2.RaceResultSummary()
+    if e_id in global_race_results:
+        sorted_results = sorted(global_race_results[e_id].results.items(), key=lambda item: item[1].activity_data.world_time)
+        for index, (player_id, result) in enumerate(sorted_results):
+            rr = race_result_pb2.RaceResultEntry()
+            rr.player_id = player_id
+            rr.event_subgroup_id = e_id
+            rr.position = index + 1
+            rr.event_id = e_id
+            rr.activity_data.CopyFrom(result.activity_data)
+            rr.activity_data.time = rr.activity_data.world_time + 1414016074397
+            ape = ActualPrivateEvents()
+            if e_id in ape.keys():
+                rr.activity_data.elapsed_ms = rr.activity_data.time - stime_to_timestamp(ape[e_id]['eventStart']) * 1000
+            rr.power_data.CopyFrom(result.power_data)
+            profile = get_partial_profile(player_id)
+            rr.profile_data.weight_in_grams = profile.weight_in_grams
+            rr.profile_data.height_in_centimeters = profile.height_in_millimeters // 10
+            rr.profile_data.gender = 1 if profile.male else 2
+            rr.profile_data.player_type = profile.player_type
+            rr.profile_data.first_name = profile.first_name
+            rr.profile_data.last_name = profile.last_name
+            if profile.imageSrc:
+                rr.profile_data.avatar_url = profile.imageSrc
+            rr.sensor_data.CopyFrom(result.sensor_data)
+            rr.time = rr.activity_data.time
+            rr.distance_to_leader = rr.activity_data.world_time - sorted_results[0][1].activity_data.world_time
+            results.f1.add().CopyFrom(rr)
+            results.f2.add().CopyFrom(rr)
+        results.total = len(results.f1)
+    return results.SerializeToString(), 200
+
 
 def add_segment_results(results, rows):
     for row in rows:
@@ -3634,17 +3738,20 @@ def relay_worlds_leave(server_realm):
     return '{"worldtime":%ld}' % world_time()
 
 
-@app.route('/experimentation/v1/variant', methods=['POST'])
-@app.route('/experimentation/v1/machine-id-variant', methods=['POST'])
-def experimentation_v1_variant():
-    req = variants_pb2.FeatureRequest()
-    req.ParseFromString(request.stream.read())
+def load_variants(file):
+    vs = variants_pb2.FeatureResponse()
+    try:
+        Parse(open(file).read(), vs)
+    except Exception as exc:
+        logging.warning("load_variants: %s" % repr(exc))
     variants = {}
-    with open(os.path.join(SCRIPT_DIR, "data", "variants.txt")) as f:
-        vs = variants_pb2.FeatureResponse()
-        Parse(f.read(), vs)
-        for v in vs.variants:
-            variants[v.name] = v
+    for v in vs.variants:
+        variants[v.name] = v
+    return variants
+
+def create_variants_response(request, variants):
+    req = variants_pb2.FeatureRequest()
+    req.ParseFromString(request)
     response = variants_pb2.FeatureResponse()
     for params in req.params:
         for param in params.param:
@@ -3653,6 +3760,21 @@ def experimentation_v1_variant():
             else:
                 logger.info("Unknown feature: " + param)
     return response.SerializeToString(), 200
+
+@app.route('/experimentation/v1/variant', methods=['POST'])
+@jwt_to_session_cookie
+@login_required
+def experimentation_v1_variant():
+    variants = load_variants(os.path.join(SCRIPT_DIR, "data", "variants.txt"))
+    override = os.path.join(STORAGE_DIR, str(current_user.player_id), "variants.txt")
+    if os.path.isfile(override):
+        variants.update(load_variants(override))
+    return create_variants_response(request.stream.read(), variants)
+
+@app.route('/experimentation/v1/machine-id-variant', methods=['POST'])
+def experimentation_v1_machine_id_variant():
+    variants = load_variants(os.path.join(SCRIPT_DIR, "data", "variants.txt"))
+    return create_variants_response(request.stream.read(), variants)
 
 def get_profile_saved_game_achiev2_40_bytes():
     profile_file = '%s/%s/profile.bin' % (STORAGE_DIR, current_user.player_id)
@@ -3765,6 +3887,168 @@ def api_player_profile_user_game_storage_attributes():
             if int(n) in a.DESCRIPTOR.fields_by_number and a.HasField(a.DESCRIPTOR.fields_by_number[int(n)].name):
                 ret.attributes.add().CopyFrom(a)
     return ret.SerializeToString(), 200
+
+
+def get_streaks(player_id):
+    streaks = profile_pb2.Streaks()
+    streaks_file = '%s/%s/streaks.bin' % (STORAGE_DIR, player_id)
+    if os.path.isfile(streaks_file):
+        with open(streaks_file, 'rb') as f:
+            streaks.ParseFromString(f.read())
+    else:
+        profile_file = '%s/%s/profile.bin' % (STORAGE_DIR, player_id)
+        if os.path.isfile(profile_file):
+            profile = profile_pb2.PlayerProfile()
+            with open(profile_file, 'rb') as f:
+                profile.ParseFromString(f.read())
+            for field in ['cur_streak', 'cur_streak_distance', 'cur_streak_elevation', 'cur_streak_calories',
+              'max_streak', 'max_streak_distance', 'max_streak_elevation', 'max_streak_calories']:
+                setattr(streaks, field, int(getattr(profile, field)))
+            streaks.week_end = int(get_week_range(datetime.datetime.fromtimestamp(profile.last_ride))[1].timestamp() * 1000)
+            with open(streaks_file, 'wb') as f:
+                f.write(streaks.SerializeToString())
+    return streaks
+
+def update_streaks(player_id, activity):
+    streaks = get_streaks(player_id)
+    start_date = stime_to_timestamp(activity.start_date) * 1000
+    if start_date > streaks.week_end + 604800000:
+        streaks.cur_streak = 1
+        streaks.cur_streak_distance = 0
+        streaks.cur_streak_elevation = 0
+        streaks.cur_streak_calories = 0
+    elif start_date > streaks.week_end:
+        streaks.cur_streak += 1
+    streaks.cur_streak_distance += int(activity.distanceInMeters)
+    streaks.cur_streak_elevation += int(activity.total_elevation)
+    streaks.cur_streak_calories += int(activity.calories)
+    streaks.max_streak = max(streaks.cur_streak, streaks.max_streak)
+    streaks.max_streak_distance = max(streaks.cur_streak_distance, streaks.max_streak_distance)
+    streaks.max_streak_elevation = max(streaks.cur_streak_elevation, streaks.max_streak_elevation)
+    streaks.max_streak_calories = max(streaks.cur_streak_calories, streaks.max_streak_calories)
+    streaks.week_end = int(get_week_range(datetime.datetime.strptime(activity.start_date, '%Y-%m-%dT%H:%M:%S%z'))[1].timestamp() * 1000)
+    with open('%s/%s/streaks.bin' % (STORAGE_DIR, player_id), 'wb') as f:
+        f.write(streaks.SerializeToString())
+
+@app.route('/api/fitness/streaks', methods=['GET'])
+@jwt_to_session_cookie
+@login_required
+def api_fitness_streaks():
+    return get_streaks(current_user.player_id).SerializeToString(), 200
+
+@app.route('/api/fitness/metrics-and-goals', methods=['GET'])  # TODO: fitnessScore, trainingStatus, numStreakSavers, givenXp, better default goals
+@jwt_to_session_cookie
+@login_required
+def api_fitness_metrics_and_goals():
+    if request.headers['Accept'] == 'application/json':
+        try:
+            date = datetime.datetime.strptime(request.args.get('month') + request.args.get('weekOf') + request.args.get('year'), "%m%d%Y")
+        except:
+            return '', 404
+        fitness = {"fitnessMetrics": []}
+        for i in range(2):
+            start, end = get_week_range(date - datetime.timedelta(days=i * 7))
+            stmt = sqlalchemy.text("""SELECT SUM(distanceInMeters), SUM(total_elevation), SUM(movingTimeInMs), SUM(work), SUM(calories), SUM(tss)
+                FROM activity WHERE player_id = :p AND strftime('%s', start_date) >= strftime('%s', :s) AND strftime('%s', start_date) <= strftime('%s', :e)""")
+            row = db.session.execute(stmt, {"p": current_user.player_id, "s": start, "e": end}).first()
+            week = {"startOfWeek": start.strftime('%Y-%m-%d'), "fitnessScore": 0, "totalDistanceKilometers": row[0] / 1000 if row[0] else 0,
+                "totalElevationMeters": int(row[1]) if row[1] else 0, "totalDurationMinutes": int(row[2] / 60000) if row[2] else 0,
+                "totalKilojoules": int(row[3]) if row[3] else 0, "totalCalories": int(row[4]) if row[4] else 0,
+                "totalTSS": row[5] if row[5] else 0, "useMetric": get_partial_profile(current_user.player_id).use_metric,
+                "weekStreak": get_streaks(current_user.player_id).cur_streak, "numStreakSavers": 0, "days": {}, "trainingStatus": "FRESH"}
+            for i in range(0, 7):
+                day = start + datetime.timedelta(days=i)
+                stmt = sqlalchemy.text("""SELECT SUM(distanceInMeters), SUM(total_elevation), SUM(movingTimeInMs), SUM(work), SUM(calories), SUM(tss)
+                    FROM activity WHERE player_id = :p AND strftime('%F', start_date) = strftime('%F', :d)""")
+                row = db.session.execute(stmt, {"p": current_user.player_id, "d": day}).first()
+                if row[0]:
+                    d = {"day": day.strftime('%a').lower(), "distanceKilometers": row[0] / 1000, "elevationMeters": int(row[1]) if row[1] else 0,
+                        "durationMinutes": int(row[2] / 60000) if row[2] else 0, "kilojoules": int(row[3]) if row[3] else 0,
+                        "calories": int(row[4]) if row[4] else 0, "tss": row[5] if row[5] else 0,
+                        "powerZonePercentages": {"1": 1, "2": 0, "3": 0, "4": 0, "5": 0, "6": 0, "7": 0}, "givenXp": 0}
+                    zones = [0] * 7
+                    stmt = sqlalchemy.text("SELECT power_zones FROM activity WHERE player_id = :p AND strftime('%F', start_date) = strftime('%F', :d)")
+                    for row in db.session.execute(stmt, {"p": current_user.player_id, "d": day}):
+                        if row.power_zones:
+                            zones = [a + b for a, b in zip(zones, json.loads(row.power_zones))]
+                    total = sum(zones)
+                    if total:
+                        for i in range(0, 7):
+                            d["powerZonePercentages"][str(i + 1)] = zones[i] / total
+                    week["days"][d["day"]] = d
+            fitness["fitnessMetrics"].append(week)
+        end = get_week_range(date)[1].strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + 'Z'
+        row = GoalMetrics.query.filter(GoalMetrics.player_id == current_user.player_id, GoalMetrics.lastUpdated <= end).order_by(GoalMetrics.lastUpdated.desc()).first()
+        cycling = {"weekGoalTSS": row.weekGoalTSS if row else 200, "weekGoalCalories": row.weekGoalCalories if row else 2000,
+            "weekGoalKjs": row.weekGoalKjs if row else 2000, "weekGoalDistanceKilometers": row.weekGoalDistanceKilometers if row else 100,
+            "weekGoalTimeMinutes": row.weekGoalTimeMinutes if row else 180,
+            "lastUpdated": row.lastUpdated if row else datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + 'Z'}
+        fitness["goalsMetrics"] = {"all": cycling, "cycling": cycling, "running": None, "currentGoalSetting": row.currentGoalSetting if row else "DISTANCE"}
+        return jsonify(fitness)
+    else:
+        fitness = fitness_pb2.Fitness()
+        fitness.streak = get_streaks(current_user.player_id).cur_streak
+        for i, week in enumerate([fitness.this_week, fitness.last_week]):
+            start, end = get_week_range(datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=i * 7))
+            week.start = start.strftime('%Y-%m-%d')
+            stmt = sqlalchemy.text("""SELECT SUM(distanceInMeters), SUM(total_elevation), SUM(movingTimeInMs), SUM(work), SUM(calories), SUM(tss)
+                FROM activity WHERE player_id = :p AND strftime('%s', start_date) >= strftime('%s', :s) AND strftime('%s', start_date) <= strftime('%s', :e)""")
+            row = db.session.execute(stmt, {"p": current_user.player_id, "s": start, "e": end}).first()
+            week.fitness_score = 0
+            week.distance = int(row[0]) if row[0] else 0
+            week.elevation = int(row[1]) if row[1] else 0
+            week.moving_time = int(round(row[2], -4)) if row[2] else 0
+            week.work = int(row[3]) if row[3] else 0
+            week.calories = int(row[4]) if row[4] else 0
+            week.tss = row[5] if row[5] else 0
+            week.status = "FRESH"
+            for i in range(0, 7):
+                day = start + datetime.timedelta(days=i)
+                stmt = sqlalchemy.text("""SELECT SUM(distanceInMeters), SUM(total_elevation), SUM(movingTimeInMs), SUM(work), SUM(calories), SUM(tss)
+                    FROM activity WHERE player_id = :p AND strftime('%F', start_date) = strftime('%F', :d)""")
+                row = db.session.execute(stmt, {"p": current_user.player_id, "d": day}).first()
+                if row[0]:
+                    d = week.days.add()
+                    d.day = day.strftime('%a').lower()
+                    d.distance = int(row[0])
+                    d.elevation = int(row[1]) if row[1] else 0
+                    d.moving_time = int(round(row[2], -4)) if row[2] else 0
+                    d.work = int(row[3]) if row[3] else 0
+                    d.calories = int(row[4]) if row[4] else 0
+                    d.tss = row[5] if row[5] else 0
+                    zones = [0] * 7
+                    stmt = sqlalchemy.text("SELECT power_zones FROM activity WHERE player_id = :p AND strftime('%F', start_date) = strftime('%F', :d)")
+                    for row in db.session.execute(stmt, {"p": current_user.player_id, "d": day}):
+                        if row.power_zones:
+                            zones = [a + b for a, b in zip(zones, json.loads(row.power_zones))]
+                    total = sum(zones)
+                    if total:
+                        for i in range(0, 7):
+                            pz = d.power_zones.add()
+                            pz.zone = i + 1
+                            pz.percentage = zones[i] / total
+        row = GoalMetrics.query.filter_by(player_id=current_user.player_id).order_by(GoalMetrics.lastUpdated.desc()).first()
+        for sport in [fitness.goals.all, fitness.goals.cycling]:
+            sport.tss = row.weekGoalTSS if row else 200
+            sport.calories = row.weekGoalCalories if row else 2000
+            sport.work = row.weekGoalKjs if row else 2000
+            sport.distance = (int(row.weekGoalDistanceKilometers) if row else 100) * 1000
+            sport.moving_time = (row.weekGoalTimeMinutes if row else 180) * 60000
+        fitness.goals.current_goal = fitness_pb2.GoalSetting.Value(row.currentGoalSetting + "_GOAL" if row else "DISTANCE_GOAL")
+        last_updated = datetime.datetime.strptime(row.lastUpdated, "%Y-%m-%dT%H:%M:%S.%f%z") if row else datetime.datetime.now(datetime.timezone.utc)
+        fitness.goals.last_updated = int(last_updated.timestamp() * 1000)
+        return fitness.SerializeToString(), 200
+
+@app.route('/api/fitness/fitness-goals/history', methods=['PUT'])
+@jwt_to_session_cookie
+@login_required
+def api_fitness_fitness_goals_history():
+    goals = json.loads(request.stream.read())
+    goals["player_id"] = current_user.player_id
+    goals["lastUpdated"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + 'Z'
+    db.session.add(GoalMetrics(**goals))
+    db.session.commit()
+    return '', 204
 
 
 @app.teardown_request
@@ -3922,6 +4206,16 @@ def send_server_back_online_message():
     send_message(message)
     discord.send_message(message)
 
+def remove_inactive():
+    while True:
+        for p_id in list(player_partial_profiles.keys()):
+            if time.monotonic() > player_partial_profiles[p_id].time + 3600:
+                player_partial_profiles.pop(p_id)
+        for e_id in list(global_race_results.keys()):
+            if time.monotonic() > global_race_results[e_id].time + 3600:
+                global_race_results.pop(e_id)
+        time.sleep(600)
+
 
 with app.app_context():
     db.create_all()
@@ -3930,6 +4224,7 @@ with app.app_context():
     if db.session.execute(sqlalchemy.text("SELECT COUNT(*) FROM pragma_table_info('user') WHERE name='new_home'")).scalar():
         db.session.execute(sqlalchemy.text("ALTER TABLE user DROP COLUMN new_home"))
         db.session.commit()
+    check_columns(Activity, 'activity')
     if check_columns(Playback, 'playback'):
         update_playback()
     check_columns(RouteResult, 'route_result')
@@ -4027,13 +4322,10 @@ def auth_realms_zwift_protocol_openid_connect_token():
             else:
                 return '', 401
         else:  # android login
-            current_user.enable_ghosts = user.enable_ghosts
-            ghosts_enabled[current_user.player_id] = current_user.enable_ghosts
             from flask_login import encode_cookie
             # cookie is not set in request since we just logged in so create it.
             return jsonify(fake_jwt_with_session_cookie(encode_cookie(str(session['_user_id'])))), 200
     else:
-        ghosts_enabled[AnonUser.player_id] = AnonUser.enable_ghosts # to work also on Android
         r = make_response(FAKE_JWT)
         r.mimetype = 'application/json'
         return r
@@ -4058,7 +4350,6 @@ def start_zwift():
     if MULTIPLAYER:
         current_user.enable_ghosts = 'enableghosts' in request.form.keys()
         db.session.commit()
-        ghosts_enabled[current_user.player_id] = current_user.enable_ghosts
     else:
         AnonUser.enable_ghosts = 'enableghosts' in request.form.keys()
         save_option(AnonUser.enable_ghosts, ENABLEGHOSTS_FILE)
@@ -4117,6 +4408,8 @@ def run_standalone(passed_online, passed_global_relay, passed_global_pace_partne
 
     send_message_thread = threading.Thread(target=send_server_back_online_message)
     send_message_thread.start()
+    remove_inactive_thread = threading.Thread(target=remove_inactive)
+    remove_inactive_thread.start()
     logger.info("Server version %s is running." % ZWIFT_VER_CUR)
     server = WSGIServer(('0.0.0.0', 443), app, certfile='%s/cert-zwift-com.pem' % SSL_DIR, keyfile='%s/key-zwift-com.pem' % SSL_DIR, log=logger)
     server.serve_forever()

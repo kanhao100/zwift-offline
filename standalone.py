@@ -72,6 +72,7 @@ else:
             pass
         def change_presence(self, n):
             pass
+        announce = False
     discord = DummyDiscord()
 
 bot_update_freq = 3
@@ -399,6 +400,16 @@ class GhostsVariables:
     start_road = 0
     start_rt = 0
 
+def get_routes():
+    with open('%s/data/start_lines.txt' % SCRIPT_DIR) as fd:
+        return json.load(fd, object_hook=lambda d: {int(k) if k.lstrip('-').isdigit() else k: v for k, v in d.items()})
+
+def get_route_name(state):
+    routes = get_routes()
+    if state.route in routes:
+        return routes[state.route]['name']
+    return zo.courses_lookup[zo.get_course(state)]
+
 def load_ghosts_folder(folder, ghosts):
     if os.path.isdir(folder):
         for f in os.listdir(folder):
@@ -419,11 +430,10 @@ def load_ghosts(player_id, state, ghosts):
         load_ghosts_folder('%s/%s' % (folder, state.route), ghosts)
     ghosts.start_road = zo.road_id(state)
     ghosts.start_rt = state.roadTime
-    with open('%s/data/start_lines.txt' % SCRIPT_DIR) as fd:
-        sl = json.load(fd, object_hook=lambda d: {int(k) if k.lstrip('-').isdigit() else k: v for k, v in d.items()})
-        if state.route in sl:
-            ghosts.start_road = sl[state.route]['road']
-            ghosts.start_rt = sl[state.route]['time']
+    sl = get_routes()
+    if state.route in sl:
+        ghosts.start_road = sl[state.route]['road']
+        ghosts.start_rt = sl[state.route]['time']
 
 def regroup_ghosts(player_id):
     p = online[player_id]
@@ -504,7 +514,7 @@ def load_bots():
                         positions = []
                         for n in range(0, multiplier):
                             p = profile_pb2.PlayerProfile()
-                            p.CopyFrom(zo.random_profile(p))
+                            zo.random_equipment(p)
                             p.id = i + 1000000 + n * 10000
                             global_bots[p.id] = BotVariables()
                             bot = global_bots[p.id]
@@ -522,17 +532,11 @@ def load_bots():
                                 loop_riders = get_names()
                                 random.shuffle(loop_riders)
                             rider = loop_riders.pop()
-                            for item in ['first_name', 'last_name', 'is_male', 'country_code', 'ride_jersey', 'bike_frame', 'bike_frame_colour', 'bike_wheel_front', 'bike_wheel_rear', 'ride_helmet_type', 'glasses_type', 'ride_shoes_type', 'ride_socks_type']:
+                            for item in ['first_name', 'last_name', 'is_male', 'country_code', 'bike_frame', 'bike_frame_colour', 'bike_wheel_front', 'bike_wheel_rear',
+                              'glasses_type', 'ride_jersey', 'ride_helmet_type', 'ride_shoes_type', 'ride_socks_type', 'run_shirt_type', 'run_shorts_type', 'run_shoes_type']:
                                 if item in rider:
                                     setattr(p, item, rider[item])
-                            p.hair_type = random.choice(zo.GD['hair_types'])
-                            p.hair_colour = random.randrange(5)
-                            if p.is_male:
-                                p.body_type = random.choice(zo.GD['body_types_male'])
-                                p.facial_hair_type = random.choice(zo.GD['facial_hair_types'])
-                                p.facial_hair_colour = random.randrange(5)
-                            else:
-                                p.body_type = random.choice(zo.GD['body_types_female'])
+                            zo.random_body(p)
                             bot.profile = p
                         i += 1
 
@@ -555,9 +559,14 @@ def play_bots():
 def remove_inactive():
     while True:
         for p_id in list(online.keys()):
-            if zo.world_time() > online[p_id].worldTime + 10000:
+            if zo.world_time() > online[p_id].worldTime + 30000:
+                zo.save_bookmark(online[p_id], 'Last ' + ('run' if online[p_id].sport == profile_pb2.Sport.RUNNING else 'ride'))
+                online.pop(p_id)
+                discord.change_presence(len(online))
+                if discord.announce:
+                    discord.send_message("Leaving", p_id)
                 zo.logout_player(p_id)
-        time.sleep(1)
+        time.sleep(5)
 
 def is_state_new_for(peer_player_state, player_id):
     if not player_id in global_news.keys():
@@ -639,9 +648,12 @@ class UDPHandler(socketserver.BaseRequestHandler):
             if player_id in online.keys():
                 if online[player_id].worldTime > state.worldTime:
                     return #udp is unordered -> drop old state
-            else:
-                discord.change_presence(len(online) + 1)
-            online[player_id] = state
+                online[player_id] = state
+            elif zo.world_time() < state.worldTime + 10000:
+                online[player_id] = state
+                discord.change_presence(len(online))
+                if discord.announce:
+                    discord.send_message("%s in %s" % (('Running' if state.sport == profile_pb2.Sport.RUNNING else 'Riding'), get_route_name(state)), player_id)
 
         #Add handling of ghosts for player if it's missing
         if not player_id in global_ghosts.keys():
@@ -690,7 +702,7 @@ class UDPHandler(socketserver.BaseRequestHandler):
         nearby = {}
         for p_id in online.keys():
             player = online[p_id]
-            if player.id != player_id:
+            if player.id != player_id and zo.world_time() < player.worldTime + 10000:
                 is_nearby, distance = nearby_distance(watching_state, player)
                 if is_nearby and is_state_new_for(player, player_id):
                     nearby[p_id] = distance

@@ -80,13 +80,13 @@ zoffline 可以安装在与 Zwift 相同的机器上或另一台本地机器上�
   version: "3.3"
   services:
       zoffline:
-           image: zoffline/zoffline:latest
-           container_name: zoffline
-           environment:
+          image: zoffline/zoffline:latest
+          container_name: zoffline
+          environment:
               - TZ=Europe/London
-           volumes:
+          volumes:
               - ./storage/:/usr/src/app/zwift-offline/storage
-           ports:
+          ports:
               - 80:80
               - 443:443
               - 3024:3024/udp
@@ -378,6 +378,7 @@ zoffline 为 Zwift 域名签发的自签名证书。你也可以生成自己的�
   channel = 
   welcome_message = 
   help_message = 
+  announce_players = 
   ```
 </details>
 
