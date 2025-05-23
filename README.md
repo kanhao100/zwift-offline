@@ -308,12 +308,16 @@ zoffline 为 Zwift 域名签发的自签名证书。你也可以生成自己的�
 
 要启用多用户支持,请执行以下步骤:
 
-* 在 ``storage`` 目录中创建一个 ``multiplayer.txt`` 文件。
-* 如果你不是在运行 Zwift 的同一台电脑上运行 zoffline:在 ``storage`` 目录中创建一个 ``server-ip.txt`` 文件,其中包含运行 zoffline 的电脑的 IP 地址。
-  * 如果 zoffline 远程运行,则需要在运行 zoffline 的电脑上打开 TCP 端口 80、443、3025 和 UDP 端口 3024。
-* 启动 Zwift 并创建一个账户。
-  * 此账户仅存在于你的 zoffline 服务器上,与你的实际 Zwift 账户无关。
-* 要启用密码重置功能:在 ``storage`` 目录中创建一个 ``gmail_credentials.txt`` 文件,其中包含 Gmail 账户的登录凭据。你需要访问 https://security.google.com/settings/security/apppasswords 并创建一个应用密码以允许从服务器登录。
+
+* Create a ``multiplayer.txt`` file in the ``storage`` directory.
+* If you are not running zoffline on the same PC that Zwift is running: create a ``server-ip.txt`` file in the ``storage`` directory containing the IP address of the PC running zoffline.
+  * TCP ports 80, 443, 3025 and UDP port 3024 will need to be open on the PC running zoffline if it's running remotely.
+* Start Zwift and create an account.
+  * This account will only exist on your zoffline server and has no relation with your actual Zwift account.
+* To enable the password reset feature: create a ``gmail_credentials.txt`` file in the ``storage`` directory containing the login credentials of a Gmail account.
+  * You need to access https://security.google.com/settings/security/apppasswords and create an app password to allow the login from the server.
+  * Optionally, the third line can contain the host for the recovery URL (server IP will be used by default).
+
 
 </details>
 
