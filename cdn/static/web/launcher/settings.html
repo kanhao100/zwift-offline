@@ -1,16 +1,16 @@
 {% extends "./layout.html" %}
 {% block content %}
-  <h1><div class="text-shadow">Settings</div></h1>
+  <h1><div class="text-shadow">设置</div></h1>
   {% if username != "zoffline" %}
-    <h4 class="text-shadow">Logged in as {{ username }}</h4>
+    <h4 class="text-shadow">已登录:{{ username }}</h4>
   {% endif %}
   <div class="row">
     <div class="col-md-12">
-      <a href="{{ url_for('user_home', username=username) }}" class="btn btn-sm btn-secondary">Back</a>
+      <a href="{{ url_for('user_home', username=username) }}" class="btn btn-sm btn-secondary">返回</a>
       {% if username != "zoffline" %}
-        <a href="{{ url_for('reset', username=username) }}" class="btn btn-sm btn-secondary">Change password</a>
+        <a href="{{ url_for('reset', username=username) }}" class="btn btn-sm btn-secondary">修改密码</a>
       {% endif %}
-      <a href="{{ url_for('power_curves', username=username) }}" class="btn btn-sm btn-secondary">Power curves</a>
+      <a href="{{ url_for('power_curves', username=username) }}" class="btn btn-sm btn-secondary">功率曲线</a>
       <a href="{{ url_for('profile', username=username) }}" class="btn btn-sm btn-secondary">Zwift</a>
       <a href="{{ url_for('strava', username=username) }}" class="btn btn-sm btn-secondary">Strava</a>
       <a href="{{ url_for('garmin', username=username) }}" class="btn btn-sm btn-secondary">Garmin</a>
@@ -50,7 +50,7 @@
   <div class="row">
     <div class="col-sm-8 col-md-6">
       <form method="POST" action="/settings/{{ username }}/" enctype="multipart/form-data" class="top-buffer">
-        <h5 class="text-shadow">Upload profile / achievements</h5>
+        <h5 class="text-shadow">上传profile / achievements</h5>
         <div class="row">
           <div class="col-md-12">
             <input type="file" name="file" class="form-control-file text-shadow" />
@@ -58,7 +58,7 @@
         </div>
         <div class="row">
           <div class="col-md-12 top-buffer">
-            <input type="submit" value="Upload" class="btn btn-sm btn-light"/>
+            <input type="submit" value="上传" class="btn btn-sm btn-light"/>
           </div>
         </div>
       </form>
