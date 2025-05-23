@@ -2,13 +2,19 @@
 [![ci](https://github.com/kanhao100/zwift-offline/actions/workflows/ci.yml/badge.svg)](https://github.com/kanhao100/zwift-offline/actions/workflows/ci.yml)
 [![pyinstaller](https://github.com/kanhao100/zwift-offline/actions/workflows/pyinstaller.yaml/badge.svg)](https://github.com/kanhao100/zwift-offline/actions/workflows/pyinstaller.yaml)
 
-本仓库是 zoffline_CN 的代码仓库，目前与社区通用版本 zoffline 有如下区别，后续会添加更多功能：
+本仓库是 zoffline_CN 的代码仓库，目前与社区通用版本 [zoffline](https://github.com/zoffline/zwift-offline) 有如下区别，后续会添加更多功能：
 - 登录界面添加了中文支持
-- 添加了邀请码注册制度
+- 添加了邀请码注册制度，提高了公开服务器安全性
 
-以下是 zoffline README文件的翻译：
+中文版Windows exe下载：从Action - pyinstaller - 自行下载artifact
 
-zoffline 通过充当部分 Zwift 服务器的实现,使得可以离线使用 [Zwift](http://zwift.com)。默认情况下 zoffline 仅支持单人游戏。查看[步骤 6: 启用多人游戏](#step-6-可选-启用多人游戏)了解如何启用多用户/多配置文件支持。
+中文版docker: `docker push kanhao100/zoffline:latest`
+
+
+
+以下是 [zoffline](https://github.com/zoffline/zwift-offline) README文件的翻译：
+
+zoffline 通过充当部分 Zwift 服务器的实现,使得可以离线使用 [Zwift](http://zwift.com)。默认情况下 [zoffline](https://github.com/zoffline/zwift-offline) 仅支持单人游戏。查看[步骤 6: 启用多人游戏](#step-6-可选-启用多人游戏)了解如何启用多用户/多配置文件支持。
 
 zoffline 还提供了与幽灵(你之前的骑行记录)一起骑行的功能。通过在 zoffline 启动器中勾选"Enable ghosts"来启用此功能。查看[额外功能](#额外功能)了解更多详情。
 
