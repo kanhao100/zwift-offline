@@ -96,14 +96,24 @@ jobs:
           PR_BODY="This PR was automatically created by a GitHub Action to sync changes from the upstream repository [zoffline/zwift-offline@${{ env.UPSTREAM_BRANCH }}](https://github.com/zoffline/zwift-offline/tree/${{ env.UPSTREAM_BRANCH }}).\n\nLatest upstream commit included: [${UPSTREAM_SHORT_SHA}](https://github.com/zoffline/zwift-offline/commit/$UPSTREAM_COMMIT_SHA)\n\nPlease review the changes. If there are merge conflicts, you will need to resolve them manually. You can do this by checking out this PR's branch ('${{ steps.create_sync_branch.outputs.SYNC_BRANCH_NAME }}'), merging '${{ env.FORK_BRANCH }}' into it, resolving conflicts, and then pushing the changes back to '${{ steps.create_sync_branch.outputs.SYNC_BRANCH_NAME }}'."
 
           # 使用 GitHub CLI (gh) 创建 Pull Request
-          gh pr create \
+          # 首先尝试带标签创建，如果失败则不带标签重试
+          if ! gh pr create \
             --repo "${{ github.repository }}" \
             --base "${{ env.FORK_BRANCH }}" \
             --head "${{ steps.create_sync_branch.outputs.SYNC_BRANCH_NAME }}" \
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
             --label "automated-sync,upstream-update" \
-            --assignee "${{ env.PR_ASSIGNEE }}"
+            --assignee "${{ env.PR_ASSIGNEE }}" 2>/dev/null; then
+            echo "Warning: Failed to create PR with labels, retrying without labels..."
+            gh pr create \
+              --repo "${{ github.repository }}" \
+              --base "${{ env.FORK_BRANCH }}" \
+              --head "${{ steps.create_sync_branch.outputs.SYNC_BRANCH_NAME }}" \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" \
+              --assignee "${{ env.PR_ASSIGNEE }}"
+          fi
           echo "Pull Request created from ${{ steps.create_sync_branch.outputs.SYNC_BRANCH_NAME }} to ${{ env.FORK_BRANCH }}"
 
       - name: Log no sync needed
