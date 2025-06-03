@@ -22,6 +22,8 @@ import jwt
 import sqlalchemy
 import fitdecode
 import xml.etree.ElementTree as ET
+import click
+import string
 from copy import deepcopy
 from functools import wraps
 from io import BytesIO
@@ -390,6 +392,12 @@ class PowerCurve(db.Model):
 class Version(db.Model):
     version = db.Column(db.Integer, primary_key=True)
 
+class InviteCode(db.Model):
+    code = db.Column(db.String(6), primary_key=True)
+    used = db.Column(db.Boolean, default=False)
+    used_by = db.Column(db.Integer, db.ForeignKey('user.player_id'), nullable=True)
+    used_at = db.Column(db.DateTime, nullable=True)
+
 class Relay:
     def __init__(self, key = b''):
         self.ri = 0
@@ -589,38 +597,73 @@ def jwt_to_session_cookie(f):
 @app.route("/signup/", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-        username = request.form['username']
+        username_with_code = request.form['username']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
         first_name = request.form['first_name']
         last_name = request.form['last_name']
-
-        if not (username and password and confirm_password and first_name and last_name):
-            flash("All fields are required.")
+        
+        if '#' not in username_with_code:
+            flash("请使用格式: email#code")
+            return redirect(url_for('signup'))
+        username, invite_code = username_with_code.split('#', 1)
+        if not (username and password and confirm_password and first_name and last_name and invite_code):
+            flash("所有字段都是必需的.")
             return redirect(url_for('signup'))
         if not re.match(r"[^@]+@[^@]+\.[^@]+", username):
-            flash("Username is not a valid e-mail address.")
+            flash("用户名不是有效的电子邮件地址.")
             return redirect(url_for('signup'))
         if password != confirm_password:
-            flash("Passwords did not match.")
+            flash("密码不匹配.")
             return redirect(url_for('signup'))
-
+        if not re.match(r"^[A-Za-z0-9]{6}$", invite_code):
+            flash("无效的邀请码格式.")
+            return redirect(url_for('signup'))
+        invite = InviteCode.query.get(invite_code.upper())
+        if not invite:
+            flash("无效的邀请码.")
+            return redirect(url_for('signup'))
+        if invite.used:
+            flash("此邀请码已被使用.")
+            return redirect(url_for('signup'))
         hashed_pwd = generate_password_hash(password, 'scrypt')
-
         new_user = User(username=username, pass_hash=hashed_pwd, first_name=first_name, last_name=last_name)
-        db.session.add(new_user)
-
+        
         try:
+            db.session.add(new_user)
+            db.session.flush()
+            invite.used = True
+            invite.used_by = new_user.player_id
+            invite.used_at = datetime.datetime.now(datetime.timezone.utc)
             db.session.commit()
         except sqlalchemy.exc.IntegrityError:
-            flash("Username {u} is not available.".format(u=username))
+            db.session.rollback()
+            flash("用户名 {u} 不可用.".format(u=username))
             return redirect(url_for('signup'))
-
-        flash("User account has been created.")
+        flash("用户账户已创建.")
         return redirect(url_for("login"))
-
     return render_template("signup.html")
 
+def generate_invite_code():
+    chars = string.ascii_uppercase + string.digits
+    while True:
+        code = ''.join(random.choice(chars) for _ in range(6))
+        if not InviteCode.query.get(code):
+            return code
+
+@app.cli.command("generate-invites")
+@click.argument("count", type=int)
+def generate_invite_codes(count):
+    codes = []
+    for _ in range(count):
+        code = generate_invite_code()
+        invite = InviteCode(code=code)
+        db.session.add(invite)
+        codes.append(code)
+    db.session.commit()
+    print(f"Generated {count} invite codes:")
+    for code in codes:
+        print(code)
 
 def check_sha256_hash(pwhash, password):
     import hmac
@@ -641,7 +684,7 @@ def login():
         remember = bool(request.form.get('remember'))
 
         if not (username and password):
-            flash("Username and password cannot be empty.")
+            flash("用户名和密码不能为空.")
             return redirect(url_for('login'))
 
         user = User.query.filter_by(username=username).first()
@@ -651,7 +694,7 @@ def login():
                 user.pass_hash = generate_password_hash(password, 'scrypt')
                 db.session.commit()
             else:
-                flash("Invalid username or password.")
+                flash("用户名或密码无效.")
                 return redirect(url_for('login'))
 
         if user and check_password_hash(user.pass_hash, password):
@@ -662,7 +705,7 @@ def login():
                 return '', 500
             return redirect(url_for("user_home", username=username, enable_ghosts=bool(user.enable_ghosts), online=get_online()))
         else:
-            flash("Invalid username or password.")
+            flash("用户名或密码无效.")
 
     if current_user.is_authenticated and current_user.remember:
         return redirect(url_for("user_home", username=current_user.username, enable_ghosts=bool(current_user.enable_ghosts), online=get_online()))
@@ -701,20 +744,20 @@ def forgot():
     if request.method == "POST":
         username = request.form['username']
         if not username:
-            flash("Username cannot be empty.")
+            flash("用户名不能为空.")
             return redirect(url_for('forgot'))
         if not re.match(r"[^@]+@[^@]+\.[^@]+", username):
-            flash("Username is not a valid e-mail address.")
+            flash("用户名不是有效的电子邮件地址.")
             return redirect(url_for('forgot'))
 
         user = User.query.filter_by(username=username).first()
         if user:
             if send_mail(username, user.get_token()):
-                flash("E-mail sent.")
+                flash("电子邮件已发送.")
             else:
-                flash("Could not send e-mail.")
+                flash("无法发送电子邮件.")
         else:
-            flash("Invalid username.")
+            flash("用户名无效.")
 
     return render_template("forgot.html")
 
@@ -776,16 +819,16 @@ def reset(username):
         confirm_password = request.form['confirm_password']
 
         if not (password and confirm_password):
-            flash("All fields are required.")
+            flash("所有字段都是必需的.")
             return redirect(url_for('reset', username=current_user.username))
         if password != confirm_password:
-            flash("Passwords did not match.")
+            flash("密码不匹配.")
             return redirect(url_for('reset', username=current_user.username))
 
         hashed_pwd = generate_password_hash(password, 'scrypt')
         current_user.pass_hash = hashed_pwd
         db.session.commit()
-        flash("Password changed.")
+        flash("密码已更改.")
         return redirect(url_for('settings', username=current_user.username))
     return render_template("reset.html", username=current_user.username)
 
@@ -798,7 +841,7 @@ def strava(username):
     token = os.path.isfile('%s/strava_token.txt' % profile_dir)
     if request.method == "POST":
         if request.form['client_id'] == "" or request.form['client_secret'] == "":
-            flash("Client ID and secret can't be empty.")
+            flash("Client ID 和 secret 不能为空.")
             return render_template("strava.html", username=current_user.username, token=token)
         encrypt_credentials(api, (request.form['client_id'], request.form['client_secret']))
     cred = decrypt_credentials(api)
@@ -830,10 +873,10 @@ def authorization():
             f.write(token_response['access_token'] + '\n')
             f.write(token_response['refresh_token'] + '\n')
             f.write(str(token_response['expires_at']) + '\n')
-        flash("Strava authorized.")
+        flash("Strava 已授权.")
     except Exception as exc:
         logger.warning('Strava: %s' % repr(exc))
-        flash("Strava authorization canceled.")
+        flash("Strava 授权取消.")
     return redirect(url_for('strava', username=current_user.username))
 
 
@@ -843,10 +886,10 @@ def encrypt_credentials(file, cred):
         with open(file, 'wb') as f:
             f.write(cipher_suite.iv)
             f.write(cipher_suite.encrypt((cred[0] + '\n' + cred[1]).encode('UTF-8')))
-        flash("Credentials saved.")
+        flash("凭证已保存.")
     except Exception as exc:
         logger.warning('encrypt_credentials: %s' % repr(exc))
-        flash("Error saving %s" % file)
+        flash("保存 %s 时出错" % file)
 
 def decrypt_credentials(file):
     cred = ('', '')
@@ -873,10 +916,10 @@ def profile(username):
     cred = decrypt_credentials(file)
     if request.method == "POST":
         if request.form['username'] == "" or request.form['password'] == "":
-            flash("Zwift credentials can't be empty.")
+            flash("Zwift 凭证不能为空.")
             return render_template("profile.html", username=current_user.username)
         if not request.form.get("zwift_profile") and not request.form.get("achievements") and not request.form.get("save_zwift"):
-            flash("Select at least one option.")
+            flash("请至少选择一个选项.")
             return render_template("profile.html", username=current_user.username, uname=cred[0], passw=cred[1])
         username = request.form['username']
         password = request.form['password']
@@ -911,11 +954,11 @@ def profile(username):
                     encrypt_credentials(file, (username, password))
             except Exception as exc:
                 logger.warning('Zwift profile: %s' % repr(exc))
-                flash("Error downloading profile.")
+                flash("下载 Zwift 个人资料时出错.")
                 return render_template("profile.html", username=current_user.username, uname=cred[0], passw=cred[1])
         except Exception as exc:
             logger.warning('online_sync.login: %s' % repr(exc))
-            flash("Invalid username or password.")
+            flash("用户名或密码无效.")
             return render_template("profile.html", username=current_user.username)
         return redirect(url_for('settings', username=current_user.username))
     return render_template("profile.html", username=current_user.username, uname=cred[0], passw=cred[1])
@@ -928,7 +971,7 @@ def garmin(username):
     token = os.path.isfile('%s/%s/garth/oauth1_token.json' % (STORAGE_DIR, current_user.player_id))
     if request.method == "POST":
         if request.form['username'] == "" or request.form['password'] == "":
-            flash("Garmin credentials can't be empty.")
+            flash("Garmin 凭证不能为空.")
             return render_template("garmin.html", username=current_user.username, token=token)
         encrypt_credentials(file, (request.form['username'], request.form['password']))
     cred = decrypt_credentials(file)
@@ -944,10 +987,10 @@ def garmin_auth():
         username, password = decrypt_credentials('%s/%s/garmin_credentials.bin' % (STORAGE_DIR, current_user.player_id))
         garth.login(username, password)
         garth.save('%s/%s/garth' % (STORAGE_DIR, current_user.player_id))
-        flash("Garmin authorized.")
+        flash("Garmin 已授权.")
     except Exception as exc:
         logger.warning('garmin_auth: %s' % repr(exc))
-        flash("Garmin authorization failed.")
+        flash("Garmin 授权失败.")
     return redirect(url_for('garmin', username=current_user.username))
 
 
@@ -957,7 +1000,7 @@ def intervals(username):
     file = '%s/%s/intervals_credentials.bin' % (STORAGE_DIR, current_user.player_id)
     if request.method == "POST":
         if request.form['athlete_id'] == "" or request.form['api_key'] == "":
-            flash("Intervals.icu credentials can't be empty.")
+            flash("Intervals.icu 凭证不能为空.")
             return render_template("intervals.html", username=current_user.username)
         encrypt_credentials(file, (request.form['athlete_id'], request.form['api_key']))
         return redirect(url_for('settings', username=current_user.username))
@@ -1107,7 +1150,7 @@ def delete(filename):
     if filename in garmin:
         return redirect(url_for('garmin', username=current_user.username))
     if filename in credentials:
-        flash("Credentials removed.")
+        flash("凭证已移除.")
     return redirect(url_for('settings', username=current_user.username))
 
 @app.route("/power_curves/<username>/", methods=["GET", "POST"])
@@ -1122,9 +1165,9 @@ def power_curves(username):
             if os.path.isdir(fit_dir):
                 for fit_file in os.listdir(fit_dir):
                     create_power_curve(player_id, os.path.join(fit_dir, fit_file))
-            flash("Power curves created.")
+            flash("功率曲线已创建.")
         else:
-            flash("Power curves deleted.")
+            flash("功率曲线已删除.")
         return redirect(url_for('settings', username=current_user.username))
     return render_template("power_curves.html", username=current_user.username)
 
@@ -1133,7 +1176,7 @@ def power_curves(username):
 def logout(username):
     session.clear()
     logout_user()
-    flash("Successfully logged out.")
+    flash("成功登出.")
     return redirect(url_for('login'))
 
 
