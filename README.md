@@ -8,7 +8,7 @@
 
 中文版Windows exe下载：从Action - pyinstaller - 自行下载artifact
 
-中文版docker: `docker push kanhao100/zoffline:latest`
+中文版docker: `docker pull kanhao100/zoffline:latest`
 
 
 
