@@ -1,74 +1,89 @@
-# zoffline
+# zoffline_CN
+[![ci](https://github.com/kanhao100/zwift-offline/actions/workflows/ci.yml/badge.svg)](https://github.com/kanhao100/zwift-offline/actions/workflows/ci.yml)
+[![pyinstaller](https://github.com/kanhao100/zwift-offline/actions/workflows/pyinstaller.yaml/badge.svg)](https://github.com/kanhao100/zwift-offline/actions/workflows/pyinstaller.yaml)
 
-zoffline enables the use of [Zwift](http://zwift.com) offline by acting as a partial implementation of a Zwift server. By default zoffline is only for a single player. See [Step 6: Enable Multiplayer](#step-6-optional-enable-multiplayer) for how to enable support for multiple users/profiles.
+本仓库是 zoffline_CN 的代码仓库，目前与社区通用版本 [zoffline](https://github.com/zoffline/zwift-offline) 有如下区别，后续会添加更多功能：
+- 登录界面添加了中文支持
+- 添加了邀请码注册制度，提高了公开服务器安全性
 
-zoffline also offers riding against ghosts (your previous rides). Enable this feature by checking "Enable ghosts" in zoffline's launcher. See [Extra features](#extra-features) for more details.
+中文版Windows exe下载：从Action - pyinstaller - 自行下载artifact
 
-Additionally, zoffline's launcher allows selecting a specific map to ride on without mucking about with config files.
+中文版docker: `docker pull kanhao100/zoffline:latest`
 
-## Install
 
-Setting up zoffline requires two primary steps. First, zoffline must be installed and run on a system before running Zwift (either on the system running Zwift or on another locally networked system).  Second, Zwift must be configured to use zoffline instead of the official Zwift server.
 
-### Step 1: Install zoffline
-There are four ways with which to install and run zoffline depending on your platform:
+以下是 [zoffline](https://github.com/zoffline/zwift-offline) README文件的翻译：
 
-<details><summary>Simplest (Windows only)</summary>
-To install zoffline on Windows:
+zoffline 通过充当部分 Zwift 服务器的实现,使得可以离线使用 [Zwift](http://zwift.com)。默认情况下 [zoffline](https://github.com/zoffline/zwift-offline) 仅支持单人游戏。查看[步骤 6: 启用多人游戏](#step-6-可选-启用多人游戏)了解如何启用多用户/多配置文件支持。
 
-* Download the latest zoffline release from https://github.com/zoffline/zwift-offline/releases/latest
-* If you are not running zoffline on the same PC that Zwift is running: create a ``server-ip.txt`` file in the ``storage`` directory containing the IP address of the PC running zoffline.
-* Run the downloaded zoffline.exe
-  * Once run, zoffline will create a ``storage`` directory in the same folder it's in to store your Zwift progress.
-* Start Zwift with zoffline.exe running (__after completing step 2__ or running __configure_client__ script from https://github.com/oldnapalm/zoffline-helper/releases/latest)
-  * It takes zoffline a few seconds to start. Wait until text appears in the command prompt before opening Zwift.
-* When done with Zwift, press Ctrl+C in the command line to close zoffline.
+zoffline 还提供了与幽灵(你之前的骑行记录)一起骑行的功能。通过在 zoffline 启动器中勾选"Enable ghosts"来启用此功能。查看[额外功能](#额外功能)了解更多详情。
+
+此外,zoffline 的启动器允许选择特定地图进行骑行,无需修改配置文件。
+
+
+
+## 安装
+
+设置 zoffline 需要两个主要步骤。首先,在运行 Zwift 之前必须在系统上安装并运行 zoffline(可以是运行 Zwift 的系统或本地网络中的另一个系统)。其次,必须将 Zwift 配置为使用 zoffline 而不是官方 Zwift 服务器。
+
+### 步骤 1: 安装 zoffline
+根据你的平台,有三种安装和运行 zoffline 的方式:
+
+<details><summary>最简单方式(仅限 Windows)</summary>
+在 Windows 上安装 zoffline:
+
+* 从 https://github.com/zoffline/zwift-offline/releases/latest 下载最新的 zoffline 发布版
+* 如果你不是在运行 Zwift 的同一台电脑上运行 zoffline:在 ``storage`` 目录中创建一个 ``server-ip.txt`` 文件,其中包含运行 zoffline 的电脑的 IP 地址。
+* 运行下载的 zoffline.exe
+  * 运行后,zoffline 将在同一文件夹中创建一个 ``storage`` 目录来存储你的 Zwift 进度。
+* 在 zoffline.exe 运行的情况下启动 Zwift (__完成步骤 2 后__ 或运行 https://github.com/oldnapalm/zoffline-helper/releases/latest 中的 __configure_client__ 脚本)
+  * zoffline 需要几秒钟才能启动。等待命令提示符中出现文本后再打开 Zwift。
+* 使用完 Zwift 后,在命令行中按 Ctrl+C 关闭 zoffline。
 </details>
 
-<details><summary>Linux, Windows, or macOS (from source)</summary>
-To install zoffline on Linux, Windows, or macOS:
+<details><summary>Linux、Windows 或 macOS(从源代码)</summary>
+在 Linux、Windows 或 macOS 上安装 zoffline:
 
-* Install Python 3 (https://www.python.org/downloads/) if not already installed
-  * On Windows, installing Python via the Microsoft Store is highly recommend! If using a Python installer, ensure that in the first Python installer screen "Add Python 3.x to PATH" is checked.
-* Clone or download this repo
-* Install dependencies
-  * e.g., on Linux/Mac: ``pip3 install -r requirements.txt``
-  * e.g., on Windows in command prompt: ``pip install -r requirements.txt``
-    * You may need to use ``C:\Users\<username>\AppData\Local\Programs\Python\Python<version>\Scripts\pip.exe`` instead of just ``pip``
-* If you are not running zoffline on the same PC that Zwift is running: create a ``server-ip.txt`` file in the ``storage`` directory containing the IP address of the PC running zoffline.
-* Run standalone.py before starting Zwift
-  * e.g., on Linux/Mac: ``sudo ./standalone.py``
-    * sudo is needed because we're binding to the privileged ports 80 and 443.
-    * If Python 3 is not your system default run ``sudo python3 standalone.py``
-  * e.g., on Windows in command prompt: ``python standalone.py``
-    * You may need to use ``C:\Users\<username>\AppData\Local\Programs\Python\Python<version>\python.exe`` instead of just ``python``
-* Start Zwift with standalone.py running (__after completing step 2__)
-* Note: When upgrading zoffline, be sure to retain the ``storage`` directory. It contains your Zwift progress state.
+* 如果尚未安装,请安装 Python 3 (https://www.python.org/downloads/)
+  * 在 Windows 上,强烈建议通过 Microsoft Store 安装 Python! 如果使用 Python 安装程序,请确保在第一个 Python 安装程序界面中勾选"Add Python 3.x to PATH"。
+* 克隆或下载此仓库
+* 安装依赖
+  * 例如,在 Linux/Mac 上: ``pip3 install -r requirements.txt``
+  * 例如,在 Windows 命令提示符中: ``pip install -r requirements.txt``
+    * 你可能需要使用 ``C:\Users\<username>\AppData\Local\Programs\Python\Python<version>\Scripts\pip.exe`` 而不是仅使用 ``pip``
+* 如果你不是在运行 Zwift 的同一台电脑上运行 zoffline:在 ``storage`` 目录中创建一个 ``server-ip.txt`` 文件,其中包含运行 zoffline 的电脑的 IP 地址。
+* 在启动 Zwift 之前运行 standalone.py
+  * 例如,在 Linux/Mac 上: ``sudo ./standalone.py``
+    * 需要 sudo 因为我们要绑定特权端口 80 和 443。
+    * 如果 Python 3 不是你的系统默认版本,运行 ``sudo python3 standalone.py``
+  * 例如,在 Windows 命令提示符中: ``python standalone.py``
+    * 你可能需要使用 ``C:\Users\<username>\AppData\Local\Programs\Python\Python<version>\python.exe`` 而不是仅使用 ``python``
+* 在 standalone.py 运行的情况下启动 Zwift (__完成步骤 2 后__)
+* 注意:升级 zoffline 时,请确保保留 ``storage`` 目录。它包含你的 Zwift 进度状态。
 
-zoffline can be installed on the same machine as Zwift or another local machine.
+zoffline 可以安装在与 Zwift 相同的机器上或另一台本地机器上。
 </details>
 
-
-<details><summary>Using Docker</summary>
+<details><summary>使用 Docker</summary>
  
-* Install Docker
-* Create the docker container with:<br>
+* 安装 Docker
+* 使用以下命令创建 docker 容器:<br>
   ``docker create --name zwift-offline -p 443:443 -p 80:80 -p 3024:3024/udp -p 3025:3025 -p 53:53/udp -v </path/to/host/storage>:/usr/src/app/zwift-offline/storage -e TZ=<timezone> zoffline/zoffline``
-  * You can optionally exclude ``-v </path/to/host/storage>:/usr/src/app/zwift-offline/storage`` if you don't care if your Zwift progress state is retained across zoffline updates (unlikely).
-  * The path you pass to ``-v`` will likely need to be world readable and writable.
-  * A list of valid ``<timezone>`` values (e.g. America/New_York) can be found [here](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones).
-  * Adding ``--restart unless-stopped`` will make zoffline start on boot if you have Docker v1.9.0 or greater.
-* If you are not running zoffline on the same PC that Zwift is running: create a ``server-ip.txt`` file in the ``</path/to/host/storage>`` directory containing the IP address of the PC running zoffline.
-* Start zoffline with:
+  * 如果你不在意 zoffline 更新时是否保留 Zwift 进度状态(不太可能),可以选择不包含 ``-v </path/to/host/storage>:/usr/src/app/zwift-offline/storage``
+  * 传递给 ``-v`` 的路径可能需要全局可读写。
+  * 有效的 ``<timezone>`` 值列表(例如 America/New_York)可以在[这里](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones)找到。
+  * 如果你使用 Docker v1.9.0 或更高版本,添加 ``--restart unless-stopped`` 将使 zoffline 在启动时自动启动。
+* 如果你不是在运行 Zwift 的同一台电脑上运行 zoffline:在 ``</path/to/host/storage>`` 目录中创建一个 ``server-ip.txt`` 文件,其中包含运行 zoffline 的电脑的 IP 地址。
+* 使用以下命令启动 zoffline:
   ``docker start zwift-offline``
 </details>
 
-
-<details><summary>Using Docker Compose</summary>
-
-* Install docker-compose
-* Either use the ``docker-compose.yml`` file in this repo which will build from the Dockerfile, or use this example compose file:
-  ``` yaml
+<details><summary>使用 Docker Compose</summary>
+ 
+* 安装 docker-compose
+* 可以使用此仓库中的 ``docker-compose.yml`` 文件(将从 Dockerfile 构建),或使用此示例 compose 文件:
+   ```
+  version: "3.3"
   services:
       zoffline:
           image: zoffline/zoffline:latest
@@ -82,186 +97,185 @@ zoffline can be installed on the same machine as Zwift or another local machine.
               - 443:443
               - 3024:3024/udp
               - 3025:3025
-          restart: unless-stopped
-  ```
-  * In the ``volumes`` tag replace ``./storage/`` before the ``:`` with the directory path you want to use as your local zoffline data store.
-* If you are not running zoffline on the same PC that Zwift is running: create a ``server-ip.txt`` file in the ``storage`` directory containing the IP address of the PC running zoffline.
-* Start zoffline with: ``docker-compose up -d``
+           restart: unless-stopped    
+   ```
+  * 在 ``volumes`` 标签中,将 ``:`` 前的 ``./storage/`` 替换为你想用作本地 zoffline 数据存储的目录路径。
+* 如果你不是在运行 Zwift 的同一台电脑上运行 zoffline:在 ``storage`` 目录中创建一个 ``server-ip.txt`` 文件,其中包含运行 zoffline 的电脑的 IP 地址。
+* 使用以下命令启动 zoffline:
+  ``docker-compose up -d ``
 </details>
 
-### Step 2: Configure Zwift client to use zoffline
+### 步骤 2: 配置 Zwift 客户端使用 zoffline
 
-<details><summary>Windows Instructions</summary>
+<details><summary>Windows 说明</summary>
 
-* Install Zwift if not already installed
-* __NOTE:__ instead of performing the steps below you can instead just run the __configure_client__ script from https://github.com/oldnapalm/zoffline-helper/releases/latest
-* On your Windows machine running Zwift, copy the following files in this repo to a known location:
+* 如果尚未安装,请安装 Zwift
+* __注意:__ 你可以不执行以下步骤,而是运行 https://github.com/oldnapalm/zoffline-helper/releases/latest 中的 __configure_client__ 脚本
+* 在运行 Zwift 的 Windows 机器上,将此仓库中的以下文件复制到已知位置:
   * [ssl/cert-zwift-com.p12](https://github.com/zoffline/zwift-offline/raw/master/ssl/cert-zwift-com.p12)
   * [ssl/cert-zwift-com.pem](https://github.com/zoffline/zwift-offline/raw/master/ssl/cert-zwift-com.pem)
-* Open Command Prompt as an admin, cd to that location and run
+* 以管理员身份打开命令提示符,cd 到该位置并运行
   * ``certutil.exe -importpfx Root cert-zwift-com.p12``
-  * If you're prompted for a password, just leave it blank. There is no password.
-* Open Notepad as an admin and open ``C:\Program Files (x86)\Zwift\data\cacert.pem``
-  * Append the contents of ``ssl/cert-zwift-com.pem`` to cacert.pem
-* Open Notepad as an admin and open ``C:\Windows\System32\Drivers\etc\hosts``
-  * Append this line: ``<zoffline ip> us-or-rly101.zwift.com secure.zwift.com cdn.zwift.com launcher.zwift.com``
-    <br />(Where ``<zoffline ip>`` is the ip address of the machine running zoffline. If
-    it's running on the same machine as Zwift, use ``127.0.0.1`` as the ip.)
-* If you wish to leave the ``hosts`` file unchanged except for when specifically using zoffline, you may optionally use the __launch.bat__ script within the ``scripts`` directory to launch zoffline instead of using the normal Zwift Launcher. See [#121](https://github.com/zoffline/zwift-offline/issues/121) for details.
+  * 如果提示输入密码,直接留空即可。没有密码。
+* 以管理员身份打开记事本并打开 ``C:\Program Files (x86)\Zwift\data\cacert.pem``
+  * 将 ``ssl/cert-zwift-com.pem`` 的内容追��到 cacert.pem
+* 以管理员身份打开记事本并打开 ``C:\Windows\System32\Drivers\etc\hosts``
+  * 追加此行: ``<zoffline ip> us-or-rly101.zwift.com secure.zwift.com cdn.zwift.com launcher.zwift.com``
+    <br />(其中 ``<zoffline ip>`` 是运行 zoffline 的机器的 IP 地址。如果
+    它与 Zwift 运行在同一台机器上,使用 ``127.0.0.1`` 作为 IP。)
+* 如果你希望在 ``hosts`` 文件中仅在特别使用 zoffline 时进行更改,你可以选择使用 ``scripts`` 目录中的 __launch.bat__ 脚本来启动 zoffline,而不是使用普通的 Zwift Launcher。详见 [#121](https://github.com/zoffline/zwift-offline/issues/121)。
 
-Why: We need to redirect Zwift to use zoffline and convince Windows and Zwift to
-accept zoffline's self signed certificates for Zwift's domain names. Feel free
-to generate your own certificates and do the same.
-
-</details>
-
-<details><summary>macOS Instructions</summary>
-
-* Install Zwift if not already installed
-* On your Mac machine running Zwift, copy the file [ssl/cert-zwift-com.pem](https://github.com/zoffline/zwift-offline/raw/master/ssl/cert-zwift-com.pem) in this repo to a known location.
-* Open Keychain Access, select "System" under "Keychains", select "Certificates" under "Category"
-    * Click "File - Import Items..." and import cert-zwift-com.pem
-    * Right click "\*.zwift.com", select "Get Info" and under "Trust" choose "When using this certificate: Always Trust".
-* From the cert-zwift-com.pem location, run ``sed -n '29,53p' cert-zwift-com.pem >> ~/Library/Application\ Support/Zwift/data/cacert.pem``
-* Using a text editor (with admin privileges) open ``/etc/hosts``
-  * Append this line: ``<zoffline ip> us-or-rly101.zwift.com secure.zwift.com cdn.zwift.com launcher.zwift.com``
-    <br />(Where ``<zoffline ip>`` is the ip address of the machine running zoffline. If
-    it's running on the same machine as Zwift, use ``127.0.0.1`` as the ip.)
-
-Why: We need to redirect Zwift to use zoffline and convince macOS and Zwift to
-accept zoffline's self signed certificates for Zwift's domain names. Feel free
-to generate your own certificates and do the same.
+原因:我们需要将 Zwift 重定向到使用 zoffline,并说服 Windows 和 Zwift 接受
+zoffline 为 Zwift 域名签发的自签名证书。你也可以生成自己的证书并执行相同操作。
 
 </details>
 
-<details><summary>Android (non-rooted device)</summary>
+<details><summary>macOS 说明</summary>
 
-* Install required apps:
-  * Download and install ``ZofflineObb.apk`` from [here](https://github.com/Argon2000/ZofflineObbAndroid/releases/latest)
-  * Download and install ``app-Github-release.apk`` from [here](https://github.com/x-falcon/Virtual-Hosts/releases/latest)
-  * Create a `hosts.txt` file to use with the app (you could use a text editor app or create it online with an online tool such as [this](https://passwordsgenerator.net/text-editor/)). The file must look like this (replace ``<zoffline ip>`` with the IP address of the machine running zoffline):
-    ```
-    <zoffline ip> us-or-rly101.zwift.com
-    <zoffline ip> secure.zwift.com
-    <zoffline ip> cdn.zwift.com
-    ```
-  * Turn off "Private DNS" in Android settings
-  * Run "Virtual Hosts" and select the created `hosts.txt` file
-  * Optionally, instead of using the "Virtual Hosts" app, you can create a ``fake-dns.txt`` file in the ``storage`` directory and set the "DNS 1" of your phone Wi-Fi connection to the IP address of the PC running zoffline
-  * Note: If you know what you're doing and have a capable enough router you can adjust your router to alter these DNS records instead of using the "Virtual Hosts" app or changing your phone DNS.
-* Patch after every installation or update:
-  * Install/update Zwift from Google play, but do not start it yet.
-    * If you have already started it go to `Android Settings > Applications > Zwift` and clear data or uninstall and reinstall the app.
-  * Open the `ZofflineObb` app and run it (allow access to storage)
-  * Wait for process to finish (5-10min)
-  * Run Zwift, hopefully it verifies download and runs
-* Play Zwift:
-  * Virtual Hosts button must be ON
-  * Start Zwift and sign in using any email/password or create a new user if multiplayer is enabled.
+* 如果尚未安装,请安装 Zwift
+* 在运行 Zwift 的 Mac 机器上,将此仓库中的文件 [ssl/cert-zwift-com.pem](https://github.com/zoffline/zwift-offline/raw/master/ssl/cert-zwift-com.pem) 复制到已知位置。
+* 打开钥匙串访问,在"钥匙串"下选择"系统",在"类别"下选择"证书"
+    * 点击"文件 - 导入项目..."并导入 cert-zwift-com.pem
+    * 右键点击 "\*.zwift.com",选择"��示简介"并在"信任"下选择"使用此证书时:始终信任"。
+* 从 cert-zwift-com.pem 所在位置,运行 ``sed -n '29,53p' cert-zwift-com.pem >> ~/Library/Application\ Support/Zwift/data/cacert.pem``
+* 使用文本编辑器(需要管理员权限)打开 ``/etc/hosts``
+  * 追加此行: ``<zoffline ip> us-or-rly101.zwift.com secure.zwift.com cdn.zwift.com launcher.zwift.com``
+    <br />(其中 ``<zoffline ip>`` 是运行 zoffline 的机器的 IP 地址。如果
+    它与 Zwift 运行在同一台机器上,使用 ``127.0.0.1`` 作为 IP。)
 
-Why: We need to redirect Zwift to use zoffline (this is done by the Virtual Hosts app) and convince Zwift to
-accept zoffline's self signed certificates for Zwift's domain names (this is done by the patch tool ZofflineObb).
+原因:我们需要将 Zwift 重定向到使用 zoffline,并说服 macOS 和 Zwift 接受
+zoffline 为 Zwift 域名签发的自签名证书。你也可以生成自己的证书并执行相同操作。
 
 </details>
 
-<details><summary>Android (rooted device)</summary>
+<details><summary>Android (非 root 设备)</summary>
 
-* Install Zwift on the device
-* Open Zwift once to complete installation (i.e download all extra files).
-* Append the contents of ``ssl/cert-zwift-com.pem`` to ``/data/data/com.zwift.zwiftgame/dataES/cacert.pem`` on the device
-  * Note: this file will only exist after the first run of Zwift since it's downloaded after the initial install
-  * Simple approach to achieve this if your device doesn't have a text editor:
+* 安装所需应用:
+  * 从[这里](https://github.com/Argon2000/ZofflineObbAndroid/releases/latest)下载并安装 ``ZofflineObb.apk``
+  * 从[这里](https://github.com/x-falcon/Virtual-Hosts/releases/latest)下载并安装 ``app-Github-release.apk``
+  * 创建一个 `hosts.txt` 文件以供应用使用(你可以使用文本编辑器应用或使用在线工具如[这个](https://passwordsgenerator.net/text-editor/)在线创建)。文件必须如下所示(将 ``<zoffline ip>`` 替换为运行 zoffline 的机器的 IP 地��):
+  ```
+  <zoffline ip> us-or-rly101.zwift.com
+  <zoffline ip> secure.zwift.com
+  <zoffline ip> cdn.zwift.com
+  ```
+  * 在 Android 设置中关闭"私人 DNS"
+  * 运行"Virtual Hosts"并选择创建的 `hosts.txt` 文件
+  * 或者,不使用"Virtual Hosts"应用,你可以在 ``storage`` 目录中创建一个 ``fake-dns.txt`` 文件,并将手机 Wi-Fi 连接的"DNS 1"设置为运行 zoffline 的电脑的 IP 地址
+  * 注意:如果你知道自己在做什么并且有足够功能的路由器,你可以调整路由器来更改这些 DNS 记录,而不是使用"Virtual Hosts"应用或更改手机 DNS。
+* 每次安装或更新后修补:
+  * 从 Google play 安装/更新 Zwift,但不要立即启动。
+    * 如果你已经启动过它,请转到 `Android 设置 > 应用 > Zwift` 并清除数据或卸载并重新安装应用。
+  * 打开 `ZofflineObb` 应用并运行它(允许访问存储)
+  * 等待进程完成(5-10分钟)
+  * 运行 Zwift,希望它能验证下载并运行
+* 玩 Zwift:
+  * Virtual Hosts 按钮必须处于 ON 状态
+  * 启动 Zwift 并使用任何电子邮件/密码登录,如果启用了多人游戏则创建新用户。
+
+原因:我们需要将 Zwift 重定向到使用 zoffline(这由 Virtual Hosts 应用完成)并说服 Zwift 接受
+zoffline 为 Zwift 域名签发的自签名证书(这由修补工具 ZofflineObb 完成)。
+
+</details>
+
+<details><summary>Android (已 root 设备)</summary>
+
+* 在设备上安装 Zwift
+* 打开 Zwift 一次以完成安装(即下载所有额外文件)。
+* 将 ``ssl/cert-zwift-com.pem`` 的内容追加到设备上的 ``/data/data/com.zwift.zwiftgame/dataES/cacert.pem``
+  * 注意:此文件仅在首次运行 Zwift 后才会存在,因为它是在初始安装后下载的
+  * 如果你的设备没有文本编辑器,这是一个简单的方法:
     * ``adb push ssl/cert-zwift-com.pem /data/data/com.zwift.zwiftgame/dataES/``
-    * In ``adb shell``: ``cd /data/data/com.zwift.zwiftgame/dataES/``
-    * In ``adb shell``: ``cat cert-zwift-com.pem >> cacert.pem``
-    * However you do it, ensure the permissions and ownership of the file remains the same.
-* Modify the device's ``/etc/hosts`` file
-  * Append this line: ``<zoffline ip> us-or-rly101.zwift.com secure.zwift.com cdn.zwift.com``
-    <br />(Where ``<zoffline ip>`` is the IP address of the machine running zoffline.)
-  * If no text editor on the device, recommend:
+    * 在 ``adb shell`` 中: ``cd /data/data/com.zwift.zwiftgame/dataES/``
+    * 在 ``adb shell`` 中: ``cat cert-zwift-com.pem >> cacert.pem``
+    * 无论你如何操作,都要确保文件的权限和所有权保持不变。
+* 修改设备的 ``/etc/hosts`` 文件
+  * 追加此行: ``<zoffline ip> us-or-rly101.zwift.com secure.zwift.com cdn.zwift.com``
+    <br />(其中 ``<zoffline ip>`` 是运行 zoffline 的机器的 IP 地址。)
+  * 如果设备上没有文本编辑器,建议:
     * ``adb pull /etc/hosts``
-    * (modify on PC)
+    * (在 PC 上修改)
     * ``adb push hosts /etc/hosts``
-  * Note: If you know what you're doing and have a capable enough router you can adjust your router to alter these DNS records instead of modifying your ``hosts`` file.
-* Start Zwift and sign in using any email/password or create a new user if multiplayer is enabled.
+  * 注意:如果你知道自己在做什么并且有足够功能的路由器,你可以调整路由器来更改这些 DNS 记录,而不是修改你的 ``hosts`` 文件。
+* 启动 Zwift 并使用任何电子邮件/密码登录,如果启用了多人游戏则创建新用户。
 
-Why: We need to redirect Zwift to use zoffline and convince Zwift to
-accept zoffline's self signed certificates for Zwift's domain names. Feel free
-to generate your own certificates and do the same.
-
-</details>
-
-#### Enabling/Disabling zoffline
-
-To use Zwift online like normal, comment out or remove the line added to the ``hosts``
-file before starting Zwift. Then ensure Zwift is fully closed (right click
-the Zwift system tray icon and exit) and restart Zwift.
-
-
-### Step 3 [OPTIONAL]: Obtain current Zwift profile
-
-<details><summary>Expand</summary>
-
-If you don't obtain your current Zwift profile before first starting Zwift with
-zoffline enabled, you will be prompted to create a new profile (height, weight,
-gender). Your profile can be further customized and changed via the in game
-menu (e.g. name, nationality, weight change, etc).
-
-To obtain your current profile:
-* __NOTE:__ instead of performing the steps below you can instead use the "Settings - Zwift" button in the launcher window (if using Android, access ``https://<zoffline_ip>/profile/zoffline/``).
-* Ensure zoffline is disabled.
-* Run ``scripts/get_profile.py -u <your_zwift_username>``
-  * Or, if using the Windows zoffline.exe version without Python installed you can run ``get_profile.exe`` obtained from https://github.com/oldnapalm/zoffline-helper/releases/latest in place of ``scripts/get_profile.py``
-* Move the resulting ``profile.bin``, ``achievements.bin`` and ``economy_config.txt`` (saved in whatever directory you ran get_profile.py in) into the ``storage/1`` directory.
-  * If using zoffline.exe on Windows, create a ``storage/1`` directory within the same folder as zoffline.exe if it does not already exist.
-  * If using Docker, the directory ``1`` should be in the path you passed to ``-v``
+原因:我们需要将 Zwift 重定向到使用 zoffline 并说服 Zwift 接受
+zoffline 为 Zwift 域名签发的自签名证书。你也可以生成自己的证书并执行相同操作。
 
 </details>
 
-### Step 4 [OPTIONAL]: Upload activities
+#### 启用/禁用 zoffline
+
+要像正常一样在线使用 Zwift,在启动 Zwift 之前注释掉或删除添加到 ``hosts``
+文件中的行。然后确保完全关闭 Zwift(右键点击 Zwift 系统托盘图标并退出)并重启 Zwift。
+
+
+### 步骤 3 [可选]: 获取当前 Zwift 配置文件
+
+<details><summary>展开</summary>
+
+如果你在首次启用 zoffline 启动 Zwift 之前没有获取当前的 Zwift 配置文件,
+系统会提示你创建一个新的配置文件(身高、体重、性别)。你的配置文件可以通过游戏内
+菜单进一步自定义和更改(例如姓名、国籍、体重变化等)。
+
+要获取你当前的配置文件:
+* __注意:__ 你可以不执行以下步骤,而是使用启动器窗口中的"Settings - Zwift"按钮(如果使用 Android,访问 ``https://<zoffline_ip>/profile/zoffline/``)。
+* 确保禁用 zoffline。
+* 运行 ``scripts/get_profile.py -u <your_zwift_username>``
+  * 或者,如果使用 Windows zoffline.exe 版本且未安装 Python,你可以运行从 https://github.com/oldnapalm/zoffline-helper/releases/latest 获取的 ``get_profile.exe`` 来代替 ``scripts/get_profile.py``
+* 将生成的 ``profile.bin``、``achievements.bin`` 和 ``economy_config.txt`` (保存在运行 get_profile.py 的目录中)移动到 ``storage/1`` 目录。
+  * 如果在 Windows 上使用 zoffline.exe,如果 ``storage/1`` 目录不存在,请在与 zoffline.exe 相同的文件夹中创建它。
+  * 如果使用 Docker,目录 ``1`` 应该在你传递给 ``-v`` 的路径中。
+
+</details>
+
+### 步骤 4 [可选]: 上传活动
 
 <details><summary>Strava</summary>
 
-* Get CLIENT_ID and CLIENT_SECRET from https://www.strava.com/settings/api
-* __NOTE:__ instead of performing the steps below you can instead set the authorization callback domain of your API application to ``launcher.zwift.com`` and use the "Settings - Strava" button in the launcher window (Windows and macOS only).
-* Run ``scripts/strava_auth.py --client-id CLIENT_ID --client-secret CLIENT_SECRET``
-  * Or, if using the Windows zoffline.exe version without Python installed you can run ``strava_auth.exe`` obtained from https://github.com/oldnapalm/zoffline-helper/releases/latest in place of ``scripts/strava_auth.py``
-* Open http://localhost:8000/ and authorize.
-* Move the resulting ``strava_token.txt`` (saved in whatever directory you ran ``strava_auth.py`` in) into the ``storage/1`` directory.
-* Automatic screenshots upload is not possible, see [#28](https://github.com/zoffline/zwift-offline/issues/28) for details.
+* 从 https://www.strava.com/settings/api 获取 CLIENT_ID 和 CLIENT_SECRET
+* __注意:__ 你可以不执行以下步骤,而是将 API 应用程序的授权回调域设置为 ``launcher.zwift.com`` 并使用启动器窗口中的"Settings - Strava"按钮(仅限 Windows 和 macOS)。
+* 运行 ``scripts/strava_auth.py --client-id CLIENT_ID --client-secret CLIENT_SECRET``
+  * 或者,如果使用 Windows zoffline.exe 版本且未安装 Python,你可以运行从 https://github.com/oldnapalm/zoffline-helper/releases/latest 获取的 ``strava_auth.exe`` 来代替 ``scripts/strava_auth.py``
+* 打开 http://localhost:8000/ 并授权。
+* 将生成的 ``strava_token.txt`` (保存在运行 ``strava_auth.py`` 的目录中)移动到 ``storage/1`` 目录。
+* 如果测试,至少骑行 300 米,更短的活动不会上传。
+* 无法自动上传��图,详见 [#28](https://github.com/zoffline/zwift-offline/issues/28)。
 
 </details>
 
 <details><summary>Garmin Connect</summary>
 
-* If running from source, install garth: ``pip install garth``
-* If needed, create a file ``garmin_domain.txt`` in the ``storage`` directory containing the domain
-  * For China use ``garmin.cn``
-* Use the "Settings - Garmin" button in the launcher window to enter your credentials (if using Android, access ``https://<zoffline_ip>/garmin/zoffline/``).
-* If your account has multi-factor authentication, run the script ``garmin_auth.py`` and move the resulting ``garth`` folder (saved in whatever directory you ran ``garmin_auth.py`` in) into the ``storage/1`` directory.
-  * Or, if using the Windows zoffline.exe version without Python installed you can run ``garmin_auth.exe`` obtained from https://github.com/oldnapalm/zoffline-helper/releases/latest instead.
+* 如果从源代码运行,安装 garth: ``pip install garth``
+* 如果需要,在 ``storage`` 目录中创建一个 ``garmin_domain.txt`` 文件,其中包含域名
+  * 对于中国使用 ``garmin.cn``
+* 使用启动器窗口中的"Settings - Garmin"按钮输入你的凭据(如果使用 Android,访问 ``https://<zoffline_ip>/garmin/zoffline/``)。
+* 如果你的账户启用了多因素认证,运行脚本 ``garmin_auth.py`` 并将生成的 ``garth`` 文件夹(保存在运行 ``garmin_auth.py`` 的目录中)移动到 ``storage/1`` 目录。
+  * 或者,如果使用 Windows zoffline.exe 版本且未安装 Python,你可以运行从 https://github.com/oldnapalm/zoffline-helper/releases/latest 获取的 ``garmin_auth.exe`` 来代替。
+* 如果测试,至少骑行 300 米,更短的活动不会上传。
 
 </details>
 
 <details><summary>Intervals.icu</summary>
 
-* Use the "Settings - Intervals" button in the launcher window to enter your credentials (if using Android, access ``https://<zoffline_ip>/intervals/zoffline/``).
-* Copy "Athlete ID" and "API Key" from https://intervals.icu/settings under "Developer Settings".
+* 使用启动器窗口中的"Settings - Intervals"按钮输入你的凭据(如果使用 Android,访问 ``https://<zoffline_ip>/intervals/zoffline/``)。
+* 从 https://intervals.icu/settings 的"Developer Settings"下复制"Athlete ID"和"API Key"。
+* 如果测试,至少骑行 300 米,更短的活动不会上传。
 
 </details>
 
-### Step 5 [OPTIONAL]: Install Zwift Companion App
+### 步骤 5 [可选]: 安装 Zwift Companion App
 
-<details><summary>Android (non-rooted device)</summary>
+<details><summary>Android (非 root 设备)</summary>
 
-* Install apk-mitm (https://github.com/shroudedcode/apk-mitm)
-* Open ``apk-mitm/dist/tools/apktool.js`` (run ``npm root -g`` to find its location) and edit it like this:
+* 安装 apk-mitm (https://github.com/shroudedcode/apk-mitm)
+* 打开 ``apk-mitm/dist/tools/apktool.js`` (运行 ``npm root -g`` 找到其位置)并按如下方式编辑:
   ``` js
       decode(inputPath, outputPath) {
           return this.run([
               'decode',
-              '-resm', // add this
-              'dummy', // add this
+              '-resm', // 添加这行
+              'dummy', // 添加这行
               inputPath,
               '--output',
               outputPath,
@@ -270,29 +284,30 @@ To obtain your current profile:
           ], 'decoding');
       }
   ```
-* Copy the file [ssl/cert-zwift-com.pem](https://github.com/zoffline/zwift-offline/raw/master/ssl/cert-zwift-com.pem) in this repo and the Zwift Companion apk (e.g. ``zca.apk``) to a known location
-* Open Command Prompt, cd to that location and run
+* 将此仓库中的文件 [ssl/cert-zwift-com.pem](https://github.com/zoffline/zwift-offline/raw/master/ssl/cert-zwift-com.pem) 和 Zwift Companion apk (例如 ``zca.apk``)复制到已知位置
+* 打开命令提示符,cd 到该位置并运行
   * ``apk-mitm --certificate cert-zwift-com.pem zca.apk``
-* Copy ``zca-patched.apk`` to your phone and install it
-* Download and install ``app-Github-release.apk`` from [here](https://github.com/x-falcon/Virtual-Hosts/releases/latest)
-* Create a ``hosts.txt`` file to use with the app (you could use a text editor app or create it online with an online tool such as [this](https://passwordsgenerator.net/text-editor/)). The file must look like this (replace ``<zoffline ip>`` with the IP address of the machine running zoffline):
+* 将 ``zca-patched.apk`` 复制到你的手机并安装
+* 从[这里](https://github.com/x-falcon/Virtual-Hosts/releases/latest)下载并安装 ``app-Github-release.apk``
+* 创建一个 ``hosts.txt`` 文件以供应用使用(你可以使用文本编辑器应用或使用在线工具如[这个](https://passwordsgenerator.net/text-editor/)在线创建)。文件必须如下所示(将 ``<zoffline ip>`` 替换为运行 zoffline 的机器的 IP 地址):
   ```
   <zoffline ip> us-or-rly101.zwift.com
   <zoffline ip> secure.zwift.com
   ```
-  * Important: don't add ``cdn.zwift.com`` to ``hosts.txt``, Companion needs to download images from the official server
-* Turn off "Private DNS" in Android settings
-* Run "Virtual Hosts" and select the created ``hosts.txt`` file
-* Optionally, instead of using the "Virtual Hosts" app, you can create a ``fake-dns.txt`` file in the ``storage`` directory and set the "DNS 1" of your phone Wi-Fi connection to the IP address of the PC running zoffline
-* Note: If you know what you're doing and have a capable enough router you can adjust your router to alter these DNS records instead of using the "Virtual Hosts" app or changing your phone DNS.
+  * 重要:不要将 ``cdn.zwift.com`` 添加到 ``hosts.txt``,Companion 需要从官方服务器下载图片
+* 在 Android 设置中关闭"私人 DNS"
+* 运行"Virtual Hosts"并选择创建的 ``hosts.txt`` 文件
+* 或者,不使用"Virtual Hosts"应用,你可以在 ``storage`` 目录中创建一个 ``fake-dns.txt`` 文件,并将手机 Wi-Fi 连接的"DNS 1"设置为运行 zoffline 的电脑的 IP 地址
+* 注意:如果你知道自己在做什么并且有足够功能的路由器,你可以调整路由器来更改这些 DNS 记录,而不是使用"Virtual Hosts"应用或更改手机 DNS。
 
 </details>
 
-### Step 6 [OPTIONAL]: Enable multiplayer
+### 步骤 6 [可选]: 启用多人游戏
 
-<details><summary>Expand</summary>
+<details><summary>展开</summary>
 
-To enable support for multiple users perform the steps below:
+要启用多用户支持,请执行以下步骤:
+
 
 * Create a ``multiplayer.txt`` file in the ``storage`` directory.
 * If you are not running zoffline on the same PC that Zwift is running: create a ``server-ip.txt`` file in the ``storage`` directory containing the IP address of the PC running zoffline.
@@ -303,69 +318,70 @@ To enable support for multiple users perform the steps below:
   * You need to access https://security.google.com/settings/security/apppasswords and create an app password to allow the login from the server.
   * Optionally, the third line can contain the host for the recovery URL (server IP will be used by default).
 
+
 </details>
 
-### Extra features
+### 额外功能
 
-<details><summary>Ghosts</summary>
+<details><summary>幽灵</summary>
 
-* Enable this feature by checking "Enable ghosts" in zoffline's launcher (if using Android, access ``https://<zoffline_ip>/user/zoffline/``, check "Enable ghosts" and click "Start Zwift" to save the option).
-* When you save an activity, the ghost will be saved in ``storage/<player_id>/ghosts/<world>/<route>``. Next time you ride the same route, the ghost will be loaded.
-* Type ``.regroup`` in chat to regroup the ghosts.
-* Equipment can be customized by creating a file ``ghost_profile.txt`` inside the ``storage`` folder. The script ``find_equip.py`` can be used to populate this file.
+* 通过在 zoffline 的启动器中勾选"Enable ghosts"启用此功能(如果使用 Android,访问 ``https://<zoffline_ip>/user/zoffline/``,勾选"Enable ghosts"并点击"Start Zwift"保存选项)。
+* 当你保存活动时,幽灵将保存在 ``storage/<player_id>/ghosts/<world>/<route>`` 中。下次你骑行相同路线时,幽灵将被加载。
+* 在聊天中输入 ``.regroup`` 可以重组幽灵。
+* 可以通过在 ``storage`` 文件夹中创建 ``ghost_profile.txt`` 文件来自定义装备。脚本 ``find_equip.py`` 可用于填充此文件。
 </details>
 
-<details><summary>Bots</summary>
+<details><summary>机器人</summary>
 
-* Create a file ``enable_bots.txt`` inside the ``storage`` folder to load ghosts as bots, they will keep riding around regardless of the route you are riding.
-* Optionally, ``enable_bots.txt`` can contain a multiplier value (be careful, if the resulting number of bots is too high, it may cause performance issues or not work at all).
-* Type ``.groupbots`` in chat to group the bots.
-* Names, nationalities and equipment can be customized by creating a file ``bot.txt`` inside the ``storage`` folder. The script ``get_pro_names.py`` can be used to populate this file.
-* If you want some random bots, check [this repository](https://github.com/oldnapalm/zoffline-bots).
+* 在 ``storage`` 文件夹中创建 ``enable_bots.txt`` 文件以将幽灵加载为机器人,它们将继续骑行,无论你骑行的路线如何。
+* 可选地,``enable_bots.txt`` 可以包含一个乘数值(请注意,如果产生的机器人数量太多,可能会导致性能问题或完全无法工作)。
+* 在聊天框键入 ``.groupbots`` 可以重新组织bots.
+* 可以通过在 ``storage`` 文件夹中创建 ``bot.txt`` 文件来自定义名字、国籍和装备。脚本 ``get_pro_names.py`` 可用于填充此文件。
+* 如果你想要一些随机机器人,请查看[这个仓库](https://github.com/oldnapalm/zoffline-bots)。
 </details>
 
-<details><summary>RoboPacers</summary>
+<details><summary>机器陪骑员</summary>
 
-* RoboPacers are ghosts saved using a power simulator, you can find some in [this repository](https://github.com/oldnapalm/zoffline-bots).
-* The ghost must be recorded using update frequency of 1 second (default is 3 seconds).
-* The activity must start and finish at the same position and speed, otherwise the bot won't loop smoothly.
-* The profile must contain a unique player ID and the route ID, so that when you join the bot you take the same turns at intersections.
-* The script ``bot_editor.py`` can be used to modify ``profile.bin`` (set name, player ID and route ID) and ``route.bin`` (cut the exceeding points to make a perfect loop).
-* If you want to create a dynamic RoboPacer (increase power on climbs and decrease on descents) you can use [standalone_power.py](https://github.com/oldnapalm/zwift-offline/blob/master/standalone_power.py) (requires 2 ANT sticks, [python-ant](https://github.com/mch/python-ant) and [PowerMeterTx.py](https://github.com/oldnapalm/zwift-offline/blob/master/PowerMeterTx.py)).
+* 机器陪骑员是使用功率模拟器保存的幽灵,你可以在[这个仓库](https://github.com/oldnapalm/zoffline-bots)中找到一些。
+* 幽灵必须使用 1 秒的更新频率记录(默认为 3 秒)。
+* 活动必须在相同的位置和速度开始和结束,否则机器人不会平滑循环。
+* 配置文件必须包含唯一的玩家 ID 和路线 ID,这样当你加入机器人时,在交叉路口会走相同的转弯。
+* 脚本 ``bot_editor.py`` 可用于修改 ``profile.bin`` (设置名字、玩家 ID 和路线 ID)和 ``route.bin`` (剪切多余的点以形成完美循环)。
+* 如果你想创建一个动态机器陪骑员(在上坡时增加功率,下坡时减少功率),你可以使用 [standalone_power.py](https://github.com/oldnapalm/zwift-offline/blob/master/standalone_power.py) (需要 2 个 ANT 接收器,[python-ant](https://github.com/mch/python-ant) 和 [PowerMeterTx.py](https://github.com/oldnapalm/zwift-offline/blob/master/PowerMeterTx.py))。
 </details>
 
-<details><summary>Bookmarks</summary>
+<details><summary>书签</summary>
 
-* When you finish an activity, your last position will be saved as a bookmark.
-* Bookmarks can also be saved using the command ``.bookmark <name>`` in the chat.
-* You can start a new activity from a bookmark by selecting it in "Join a Zwifter" on the home screen.
-* You can teleport to a bookmark using the teleport icon on the action bar.
+* 当你完成一个活动时,你的最后位置将被保存为书签。
+* 也可以使用聊天中的 ``.bookmark <name>`` 命令保存书签。
+* 你可以通过在主屏幕上的"Join a Zwifter"中选择书签来从书签开始新的活动。
+* 你可以使用动作栏上的传送图标传送到书签位置。
 </details>
 
-<details><summary>All-time leaderboards</summary>
+<details><summary>全时段排行榜</summary>
 
-* To enable all-time leaderboards (override 60 minutes live results and 90 days personal records), create a file ``all_time_leaderboards.txt`` in the ``storage`` directory.
-* Jerseys are still valid for 60 minutes but will be granted only when a new all-time record is set.
+* 要启用全时段排行榜(覆盖 60 分钟实时结果和 90 天个人记录),在 ``storage`` 目录中创建一个 ``all_time_leaderboards.txt`` 文件。
+* 领骑衫仍然只在 60 分钟内有效,但只有在创造新的全时段记录时才会授予。
 </details>
 
-<details><summary>Entitlements</summary>
+<details><summary>解锁特权</summary>
 
-* To unlock entitlements (special equipment), create a file ``unlock_entitlements.txt`` in the ``storage`` directory.
-* To unlock all equipment, create a file ``unlock_all_equipment.txt`` instead.
+* 要解锁特权(特殊装备),在 ``storage`` 目录中创建一个 ``unlock_entitlements.txt`` 文件。
+* 要解锁所有装备,请创建一个 ``unlock_all_equipment.txt`` 文件。
 </details>
 
-<details><summary>CDN proxy</summary>
+<details><summary>CDN 代理</summary>
 
-* To obtain the official map schedule and update files from Zwift server: create a ``cdn-proxy.txt`` file in the ``storage`` directory. This can only work if you are running zoffline on a different machine than the Zwift client.
-* By default, zoffline will try to proxy using Google public DNS to resolve Zwift host names, this should work even if zoffline is running on the same machine as the Zwift client. To avoid it, create a ``disable_proxy.txt`` file in the ``storage`` directory.
-* If you want to serve update files from zoffline, run the script ``get_gameassets.py`` to download the game files.
+* 要从 Zwift 服务器获取官方地图时间表和更新文件:在 ``storage`` 目录中创建一个 ``cdn-proxy.txt`` 文件。这只有在你在与 Zwift 客户端不同的机器上运行 zoffline 时才能工作。
+* 默认情况下,zoffline 将尝试使用 Google 公共 DNS 来解析 Zwift 主机名,即使 zoffline 在与 Zwift 客户端相同的机器上运行也应该可以工作。要避免这种情况,在 ``storage`` 目录中创建一个 ``disable_proxy.txt`` 文件。
+* 如果你想从 zoffline 提供更新文件,运行脚本 ``get_gameassets.py`` 来下载游戏文件。
 </details>
 
-<details><summary>Discord bridge</summary>
+<details><summary>Discord 桥接</summary>
 
-* The Discord bridge is only available if zoffline is running from source.
-* Install discord.py: ``pip3 install discord.py``
-* Create a ``discord.cfg`` file in the ``storage`` directory containing
+* Discord 桥接仅在从源代码运行 zoffline 时可用。
+* 安装 discord.py: ``pip3 install discord.py``
+* 在 ``storage`` 目录中创建一个 ``discord.cfg`` 文件,内容如下
   ```
   [discord]
   token = 
@@ -377,15 +393,15 @@ To enable support for multiple users perform the steps below:
   ```
 </details>
 
-## Community Discord server and Strava club
+## 社区 Discord 服务器和 Strava 俱乐部
 
-Please join the community supported [Discord](https://discord.gg/GMdn8F8) server and [Strava](https://www.strava.com/clubs/zoffline) club.
+请加入社区支持的 [Discord](https://discord.gg/GMdn8F8) 服务器和 [Strava](https://www.strava.com/clubs/zoffline) 俱乐部。
 
-## Dependencies
+## 依赖项
 
 Docker
 
--or-
+-或者-
 
 * Python 3 (https://www.python.org/downloads/)
 * Flask (https://flask.palletsprojects.com/)
@@ -398,28 +414,27 @@ Docker
 * dnspython (https://www.dnspython.org/)
 * fitdecode (https://pypi.org/project/fitdecode/)
 * stravalib (https://stravalib.readthedocs.io/)
-* OPTIONAL: garth (https://pypi.org/project/garth/)
-* OPTIONAL: discord.py (https://discordpy.readthedocs.io/)
+* 可选: garth (https://pypi.org/project/garth/)
+* 可选: discord.py (https://discordpy.readthedocs.io/)
 
 
-## Note
+## 注意
 
-Future Zwift updates may break zoffline until it's updated. While zoffline is
-enabled Zwift updates will not be installed. If a zoffline update broke
-something, check the ``CHANGELOG`` for possible changes that need to be made.
+未来的 Zwift 更新可能会导致 zoffline 无法使用,直到它被更新。当启用 zoffline 时,
+Zwift 更新将不会安装。如果 zoffline 更新破坏了某些功能,请查看 ``CHANGELOG`` 了解可能需要进行的更改。
 
-Don't expose zoffline to the internet, it was not designed with that in mind.
+不要将 zoffline 暴露在互联网上,它的设计初衷并非如此。
 
-<details><summary>If zoffline is out of date from Zwift's official client</summary>
-If zoffline is behind in support of the latest Zwift client it can be updated to run using the latest Zwift version.
+<details><summary>如果 zoffline 落后于 Zwift 的官方客户端</summary>
+如果 zoffline 落后于支持最新的 Zwift 客户端,可以更新它以运行最新版本的 Zwift。
 
-* Windows: copy ``C:\Program Files (x86)\Zwift\Zwift_ver_cur.xml`` to zoffline's ``cdn/gameassets/Zwift_Updates_Root/`` overwriting the existing file.
-* macOS: copy ``~/Library/Application Support/Zwift/ZwiftMac_ver_cur.xml`` to zoffline's ``cdn/gameassets/Zwift_Updates_Root/`` overwriting the existing file.
-* Linux: run [this script](https://gist.github.com/zoffline/b874e93e24439f0f4fbd7b55f3876fd2) from within the zwift-offline repository.
+* Windows: 将 ``C:\Program Files (x86)\Zwift\Zwift_ver_cur.xml`` 复制到 zoffline 的 ``cdn/gameassets/Zwift_Updates_Root/`` 覆盖现有文件。
+* macOS: 将 ``~/Library/Application Support/Zwift/ZwiftMac_ver_cur.xml`` 复制到 zoffline 的 ``cdn/gameassets/Zwift_Updates_Root/`` 覆盖现有文件。
+* Linux: 在 zwift-offline 仓库中运行[这个脚本](https://gist.github.com/zoffline/b874e93e24439f0f4fbd7b55f3876fd2)。
 
-Note: there is no guarantee that an untested Zwift update will work with zoffline. However, historically, Zwift updates rarely break zoffline.
+注意:不能保证未经测试的 Zwift 更新能与 zoffline 一起工作。然而,从历史上看,Zwift 更新很少会破坏 zoffline。
 
-Alternatively, [this script](https://gist.github.com/oldnapalm/556c58448a6ee09438b39e1c1c9ce3d0) can be used to downgrade Zwift to the version supported by zoffline.
+或者,可以使用[这个脚本](https://gist.github.com/oldnapalm/556c58448a6ee09438b39e1c1c9ce3d0)将 Zwift 降级到 zoffline 支持的版本。
 </details>
 
 <details><summary>Zwift phased updates</summary>
@@ -429,11 +444,9 @@ To workaround this situation, rename the file ``Zwift_ver_cur.<version>.xml`` in
 </details>
 
 
-## Disclaimer
+## 免责声明
 
-Zwift is a trademark of Zwift, Inc., which is not affiliated with the maker of
-this project and does not endorse this project.
+Zwift 是 Zwift, Inc. 的商标,该公司与本项目的制作者没有关联,也不认可本项目。
 
-All product and company names are trademarks of their respective holders. Use of
-them does not imply any affiliation with or endorsement by them.
+所有产品和公司名称都是其各自持有者的商标。使用它们并不意味着与它们有任何关联或得到它们的认可。
 

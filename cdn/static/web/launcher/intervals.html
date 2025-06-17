@@ -2,13 +2,13 @@
 {% block content %}
   <h1><div class="text-shadow">Intervals.icu</div></h1>
   {% if username != "zoffline" %}
-    <h4 class="text-shadow">Logged in as {{ username }}</h4>
+    <h4 class="text-shadow">已登录:{{ username }}</h4>
   {% endif %}
   <div class="row">
     <div class="col-md-12">
-      <a href="{{ url_for('settings', username=username) }}" class="btn btn-sm btn-secondary">Back</a>
+      <a href="{{ url_for('settings', username=username) }}" class="btn btn-sm btn-secondary">返回</a>
       {% if aid or akey %}
-        <a href="/delete/intervals_credentials.bin" class="btn btn-sm btn-danger">Remove credentials</a>
+        <a href="/delete/intervals_credentials.bin" class="btn btn-sm btn-danger">删除凭证</a>
       {% endif %}
     </div>
   </div>
@@ -27,7 +27,7 @@
         </div>
         <div class="row">
           <div class="col-md-12 top-buffer">
-            <input type="submit" value="Submit" class="btn btn-sm btn-light">
+            <input type="submit" value="提交" class="btn btn-sm btn-light">
           </div>
         </div>
       </form>
