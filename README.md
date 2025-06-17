@@ -335,6 +335,7 @@ zoffline 为 Zwift 域名签发的自签名证书。你也可以生成自己的�
 
 * 在 ``storage`` 文件夹中创建 ``enable_bots.txt`` 文件以将幽灵加载为机器人,它们将继续骑行,无论你骑行的路线如何。
 * 可选地,``enable_bots.txt`` 可以包含一个乘数值(请注意,如果产生的机器人数量太多,可能会导致性能问题或完全无法工作)。
+* 在聊天框键入 ``.groupbots`` 可以重新组织bots.
 * 可以通过在 ``storage`` 文件夹中创建 ``bot.txt`` 文件来自定义名字、国籍和装备。脚本 ``get_pro_names.py`` 可用于填充此文件。
 * 如果你想要一些随机机器人,请查看[这个仓库](https://github.com/oldnapalm/zoffline-bots)。
 </details>
