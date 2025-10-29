@@ -2,13 +2,13 @@
 {% block content %}
   <h1><div class="text-shadow">Zwift</div></h1>
   {% if username != "zoffline" %}
-    <h4 class="text-shadow">Logged in as {{ username }}</h4>
+    <h4 class="text-shadow">已登录为 {{ username }}</h4>
   {% endif %}
   <div class="row">
     <div class="col-md-12">
-      <a href="{{ url_for('settings', username=username) }}" class="btn btn-sm btn-secondary">Back</a>
+      <a href="{{ url_for('settings', username=username) }}" class="btn btn-sm btn-secondary">返回</a>
       {% if uname or passw %}
-        <a href="/delete/zwift_credentials.bin" class="btn btn-sm btn-danger">Remove credentials</a>
+        <a href="/delete/zwift_credentials.bin" class="btn btn-sm btn-danger">移除凭证</a>
       {% endif %}
     </div>
   </div>
@@ -17,31 +17,31 @@
       <form id="profile" action="{{ url_for('profile', username=username) }}" method="post">
         <div class="row">
           <div class="col-md-12">
-            <label class="col-form-label col-form-label-sm text-shadow">Zwift username</label>
+            <label class="col-form-label col-form-label-sm text-shadow">Zwift 用户名</label>
             <input type="text" id="username" name="username" value="{{ uname }}" class="form-control form-control-sm">
           </div>
           <div class="col-md-12">
-            <label class="col-form-label col-form-label-sm text-shadow">Zwift password</label>
+            <label class="col-form-label col-form-label-sm text-shadow">Zwift 密码</label>
             <input type="password" id="password" name="password" value="{{ passw }}" class="form-control form-control-sm">
           </div>
           <div class="col-md-12 top-buffer">
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="zwift_profile" name="zwift_profile">
-              <label class="form-check-label text-shadow" for="zwift_profile">Download profile</label>
+              <label class="form-check-label text-shadow" for="zwift_profile">下载个人资料</label>
             </div>
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="achievements" name="achievements">
-              <label class="form-check-label text-shadow" for="achievements">Download achievements</label>
+              <label class="form-check-label text-shadow" for="achievements">下载成就</label>
             </div>
             <div class="form-check">
               <input class="form-check-input" type="checkbox" id="save_zwift" name="save_zwift">
-              <label class="form-check-label text-shadow" for="save_zwift">Save credentials (upload activities)</label>
+              <label class="form-check-label text-shadow" for="save_zwift">保存凭证 (上传活动)</label>
             </div>
           </div>
         </div>
         <div class="row">
           <div class="col-md-12 top-buffer">
-            <input type="submit" value="Submit" class="btn btn-sm btn-light">
+            <input type="submit" value="提交" class="btn btn-sm btn-light">
           </div>
         </div>
       </form>
