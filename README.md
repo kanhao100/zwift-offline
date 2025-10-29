@@ -321,6 +321,10 @@ zoffline 为 Zwift 域名签发的自签名证书。你也可以生成自己的�
 
 </details>
 
+### Step 7 [OPTIONAL]: Enable IPv6
+
+To enable support for IPv6 set the environment variable ``ZOFFLINE_SERVER_HOST`` or use the script ``run_ipv6.bat``.
+
 ### 额外功能
 
 <details><summary>幽灵</summary>
