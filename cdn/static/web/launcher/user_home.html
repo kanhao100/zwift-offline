@@ -1,29 +1,29 @@
 {% extends "./layout.html" %}
 {% block content %}
-  <h1><div class="text-shadow">Zwift Launcher</div></h1>
+  <h1><div class="text-shadow">Zwift 社区服启动器</div></h1>
   {% if username != "zoffline" %}
-    <h4 class="text-shadow">Logged in as {{ username }}</h4>
+    <h4 class="text-shadow">已登录:{{ username }}</h4>
   {% endif %}
   {% if restarting %}
     <div class="row">
       <div class="col-sm-6 col-md-5">
-        <p class="alert alert-info">Server is restarting in {{ restarting_in_minutes }} minutes</p>
+        <p class="alert alert-info">服务器将在 {{ restarting_in_minutes }} 分钟内重启</p>
       </div>
     </div>
   {% endif %}
   <div class="row">
     <div class="col-md-12">
-      <a href="{{ url_for('settings', username=username) }}" class="btn btn-sm btn-secondary">Settings</a>
+      <a href="{{ url_for('settings', username=username) }}" class="btn btn-sm btn-secondary">设置</a>
       {% if is_admin %}
         {% if not restarting %}
-          <a href="/restart" class="btn btn-sm btn-danger">Restart server</a>
+          <a href="/restart" class="btn btn-sm btn-danger">重启服务器</a>
         {% else %}
-          <a href="/cancelrestart" class="btn btn-sm btn-danger">Cancel restart</a>
+          <a href="/cancelrestart" class="btn btn-sm btn-danger">取消重启</a>
         {% endif %}
-        <a href="/reloadbots" class="btn btn-sm btn-warning">Reload bots</a>
+        <a href="/reloadbots" class="btn btn-sm btn-warning">重新加载机器人</a>
       {% endif %}
       {% if username != "zoffline" %}
-        <a href="{{ url_for('logout', username=username) }}" class="btn btn-sm btn-secondary">Logout</a>
+        <a href="{{ url_for('logout', username=username) }}" class="btn btn-sm btn-secondary">登出</a>
       {% endif %}
     </div>
   </div>
@@ -32,23 +32,23 @@
       <form method="POST" action="/start-zwift" class="top-buffer">
         <div class="row">
           <div class="col-md-12">
-            <label class="text-shadow">Map</label>
+            <label class="text-shadow">地图</label>
             <select name="map" class="form-control form-control-sm">
-              <option value="CALENDAR">Calendar{% if online.total > 0 %} ({{online.total}} online total){% endif %}</option>
-              <option value="LONDON">London / Yorkshire{% if online.london + online.yorkshire > 0 %} ({{online.london + online.yorkshire}} online){% endif %}</option>
-              <option value="MAKURIISLANDS">Makuri Islands / NYC{% if online.makuriislands + online.newyork > 0 %} ({{online.makuriislands + online.newyork}} online){% endif %}</option>
-              <option value="FRANCE">France / Paris{% if online.france + online.paris > 0 %} ({{online.france + online.paris}} online){% endif %}</option>
-              <option value="RICHMOND">Richmond / London{% if online.richmond + online.london > 0 %} ({{online.richmond + online.london}} online){% endif %}</option>
-              <option value="INNSBRUCK">Innsbruck / Richmond{% if online.innsbruck + online.richmond > 0 %} ({{online.innsbruck + online.richmond}} online){% endif %}</option>
-              <option value="SCOTLAND">Scotland / Makuri Islands{% if online.scotland + online.makuriislands > 0 %} ({{online.scotland + online.makuriislands}} online){% endif %}</option>
+              <option value="CALENDAR">默认日历安排{% if online.total > 0 %} ({{online.total}} 在线总人数){% endif %}</option>
+              <option value="LONDON">London / Yorkshire{% if online.london + online.yorkshire > 0 %} ({{online.london + online.yorkshire}} 在线){% endif %}</option>
+              <option value="MAKURIISLANDS">Makuri Islands / NYC{% if online.makuriislands + online.newyork > 0 %} ({{online.makuriislands + online.newyork}} 在线){% endif %}</option>
+              <option value="FRANCE">France / Paris{% if online.france + online.paris > 0 %} ({{online.france + online.paris}} 在线){% endif %}</option>
+              <option value="RICHMOND">Richmond / London{% if online.richmond + online.london > 0 %} ({{online.richmond + online.london}} 在线){% endif %}</option>
+              <option value="INNSBRUCK">Innsbruck / Richmond{% if online.innsbruck + online.richmond > 0 %} ({{online.innsbruck + online.richmond}} 在线){% endif %}</option>
+              <option value="SCOTLAND">Scotland / Makuri Islands{% if online.scotland + online.makuriislands > 0 %} ({{online.scotland + online.makuriislands}} 在线){% endif %}</option>
             </select>
           </div>
         </div>
         <div class="row">
           <div class="col-md-12 top-buffer">
-            <label class="text-shadow">Climb</label>
+            <label class="text-shadow">爬坡</label>
             <select name="climb" class="form-control form-control-sm">
-              <option value="CALENDAR">Calendar</option>
+              <option value="CALENDAR">默认日历安排</option>
               {% for climb in climbs %}
                 <option value="{{ climb['road'] }}">{{ climb['name'] }}</option>
               {% endfor %}
@@ -60,14 +60,14 @@
             <div class="form-check">
               <input class="form-check-input" type="checkbox" {{'checked' if enable_ghosts else ''}} id="enableghosts" name="enableghosts">
               <label class="form-check-label text-shadow" for="enableghosts">
-                Enable ghosts
+                启用幽灵机器人
               </label>
             </div>
           </div>
         </div>
         <div class="row">
           <div class="col-md-12 top-buffer">
-            <input type="submit" value="Start Zwift" class="btn btn-sm btn-light">
+            <input type="submit" value="启动 Zwift" class="btn btn-sm btn-light">
           </div>
         </div>
       </form>

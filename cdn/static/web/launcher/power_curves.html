@@ -1,12 +1,12 @@
 {% extends "./layout.html" %}
 {% block content %}
-  <h1><div class="text-shadow">Power curves</div></h1>
+  <h1><div class="text-shadow">功率曲线</div></h1>
   {% if username != "zoffline" %}
-    <h4 class="text-shadow">Logged in as {{ username }}</h4>
+    <h4 class="text-shadow">已登录:{{ username }}</h4>
   {% endif %}
   <div class="row">
     <div class="col-md-12">
-      <a href="{{ url_for('settings', username=username) }}" class="btn btn-sm btn-secondary">Back</a>
+      <a href="{{ url_for('settings', username=username) }}" class="btn btn-sm btn-secondary">返回</a>
     </div>
   </div>
   <div class="row">
@@ -14,11 +14,11 @@
       <form id="power_curves" action="{{ url_for('power_curves', username=username) }}" method="post">
         <div class="row">
           <div class="col-md-12">
-            <h5 class="text-shadow">Personal best power numbers</h5>
+            <h5 class="text-shadow">个人最佳功率</h5>
           </div>
           <div id="content" class="col-md-12">
-            <input type="submit" value="Calculate from FIT files" name="create" class="btn btn-sm btn-light" onclick="working();">
-            <input type="submit" value="Reset" name="reset" class="btn btn-sm btn-danger">
+            <input type="submit" value="从FIT文件计算" name="create" class="btn btn-sm btn-light" onclick="working();">
+            <input type="submit" value="重置" name="reset" class="btn btn-sm btn-danger">
           </div>
         </div>
         <div class="row">

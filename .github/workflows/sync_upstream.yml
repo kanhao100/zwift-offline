@@ -1,0 +1,121 @@
+name: Sync Fork with Upstream
+
+# 工作流触发条件
+on:
+  schedule:
+    # 每天凌晨2点 (UTC时间) 运行一次
+    # 您可以根据需要调整 cron 表达式，例如 '0 */6 * * *' 表示每6小时运行一次
+    - cron: '0 2 */2 * *'
+  workflow_dispatch: # 允许手动从 Actions 标签页触发此工作流
+
+# 环境变量，方便统一配置和修改
+env:
+  # 上游仓库的URL (您 fork 的来源)
+  UPSTREAM_REPO_URL: https://github.com/zoffline/zwift-offline.git
+  # 上游仓库中您想同步的分支 (通常是 master 或 main)
+  UPSTREAM_BRANCH: master # 重要: 如果上游仓库使用 'main'，请修改此处
+  # 您 fork 仓库中要作为目标合并的分支 (通常是 master 或 main)
+  FORK_BRANCH: master     # 重要: 如果您的 fork 仓库使用 'main'，请修改此处
+  # Pull Request 的指派人 (通常是您自己)
+  PR_ASSIGNEE: kanhao100  # 请修改为您的 GitHub 用户名
+
+jobs:
+  sync_with_upstream:
+    runs-on: ubuntu-latest
+    # 为工作流步骤授予必要的权限
+    permissions:
+      contents: write      # 允许推送新分支和写入仓库内容
+      pull-requests: write # 允许创建 Pull Request
+
+    steps:
+      - name: Checkout Fork's target branch (${{ env.FORK_BRANCH }})
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.FORK_BRANCH }} #签出您 fork 的目标分支
+          fetch-depth: 0 # 获取所有历史记录，以便进行准确的比较和合并
+
+      - name: Set up Git user
+        # 配置 Git 用户信息，用于 Action 代表您提交（如果需要）或进行操作
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote and fetch changes
+        # 添加上游仓库作为远程，并获取其所有分支和标签
+        run: |
+          git remote add upstream ${{ env.UPSTREAM_REPO_URL }}
+          git fetch upstream --tags # 获取上游仓库的标签
+          git fetch origin --tags   # 确保也获取了您 fork 仓库的标签
+
+      - name: Check for new commits from upstream
+        id: check_commits # 给这个步骤一个ID，以便在后续步骤中引用其输出
+        run: |
+          # 确保我们当前在 FORK_BRANCH，并且本地分支与远程 fork 仓库的分支一致
+          git checkout ${{ env.FORK_BRANCH }}
+          git reset --hard origin/${{ env.FORK_BRANCH }}
+
+          # 计算上游分支 (upstream/UPSTREAM_BRANCH) 中有多少个 commit 是当前 FORK_BRANCH 所没有的
+          # HEAD 指向当前签出的本地 FORK_BRANCH
+          NEW_COMMITS_COUNT=$(git rev-list --count HEAD..upstream/${{ env.UPSTREAM_BRANCH }})
+          
+          echo "New commits on upstream/${{ env.UPSTREAM_BRANCH }} not yet in local ${{ env.FORK_BRANCH }}: $NEW_COMMITS_COUNT"
+          
+          if [ "$NEW_COMMITS_COUNT" -gt 0 ]; then
+            echo "needs_sync=true" >> $GITHUB_OUTPUT # 设置输出变量，供后续步骤判断
+          else
+            echo "needs_sync=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Sync Branch from Upstream and Push (if sync is needed)
+        if: steps.check_commits.outputs.needs_sync == 'true' # 仅当 check_commits 步骤的输出 needs_sync 为 true 时运行
+        id: create_sync_branch
+        run: |
+          # 创建一个基于时间戳的唯一分支名，用于存放上游代码
+          SYNC_BRANCH_NAME="sync-upstream-$(date +%Y%m%d-%H%M%S)"
+          echo "SYNC_BRANCH_NAME=${SYNC_BRANCH_NAME}" >> $GITHUB_OUTPUT # 将分支名设为输出变量
+          
+          echo "Creating sync branch: $SYNC_BRANCH_NAME from upstream/${{ env.UPSTREAM_BRANCH }}"
+          # 基于上游分支 (upstream/UPSTREAM_BRANCH) 创建新的本地分支
+          git checkout -b $SYNC_BRANCH_NAME upstream/${{ env.UPSTREAM_BRANCH }}
+          
+          echo "Pushing sync branch $SYNC_BRANCH_NAME to origin (your fork)"
+          # 将这个新创建的、包含上游代码的分支推送到您的 fork 仓库 (origin)
+          git push origin $SYNC_BRANCH_NAME
+
+      - name: Create Pull Request using gh CLI (if sync is needed)
+        if: steps.check_commits.outputs.needs_sync == 'true' # 同样，仅当需要同步时运行
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub Actions 自动提供的 token，具有相应权限
+          # PR_REPO: ${{ github.repository }} # 要在其上创建 PR 的仓库，默认为当前仓库
+        run: |
+          # 获取上游分支最新的 commit SHA，用于PR信息
+          UPSTREAM_COMMIT_SHA=$(git rev-parse upstream/${{ env.UPSTREAM_BRANCH }})
+          UPSTREAM_SHORT_SHA=${UPSTREAM_COMMIT_SHA:0:7}
+
+          PR_TITLE="Sync: Merge changes from zoffline/zwift-offline@${{ env.UPSTREAM_BRANCH }} (up to $UPSTREAM_SHORT_SHA)"
+          PR_BODY="This PR was automatically created by a GitHub Action to sync changes from the upstream repository [zoffline/zwift-offline@${{ env.UPSTREAM_BRANCH }}](https://github.com/zoffline/zwift-offline/tree/${{ env.UPSTREAM_BRANCH }}).\n\nLatest upstream commit included: [${UPSTREAM_SHORT_SHA}](https://github.com/zoffline/zwift-offline/commit/$UPSTREAM_COMMIT_SHA)\n\nPlease review the changes. If there are merge conflicts, you will need to resolve them manually. You can do this by checking out this PR's branch ('${{ steps.create_sync_branch.outputs.SYNC_BRANCH_NAME }}'), merging '${{ env.FORK_BRANCH }}' into it, resolving conflicts, and then pushing the changes back to '${{ steps.create_sync_branch.outputs.SYNC_BRANCH_NAME }}'."
+
+          # 使用 GitHub CLI (gh) 创建 Pull Request
+          # 首先尝试带标签创建，如果失败则不带标签重试
+          if ! gh pr create \
+            --repo "${{ github.repository }}" \
+            --base "${{ env.FORK_BRANCH }}" \
+            --head "${{ steps.create_sync_branch.outputs.SYNC_BRANCH_NAME }}" \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --label "automated-sync,upstream-update" \
+            --assignee "${{ env.PR_ASSIGNEE }}" 2>/dev/null; then
+            echo "Warning: Failed to create PR with labels, retrying without labels..."
+            gh pr create \
+              --repo "${{ github.repository }}" \
+              --base "${{ env.FORK_BRANCH }}" \
+              --head "${{ steps.create_sync_branch.outputs.SYNC_BRANCH_NAME }}" \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" \
+              --assignee "${{ env.PR_ASSIGNEE }}"
+          fi
+          echo "Pull Request created from ${{ steps.create_sync_branch.outputs.SYNC_BRANCH_NAME }} to ${{ env.FORK_BRANCH }}"
+
+      - name: Log no sync needed
+        if: steps.check_commits.outputs.needs_sync == 'false' # 如果 check_commits 步骤输出为 false
+        run: echo "Fork's ${{ env.FORK_BRANCH }} is already up-to-date with or ahead of upstream/${{ env.UPSTREAM_BRANCH }}. No PR created."
